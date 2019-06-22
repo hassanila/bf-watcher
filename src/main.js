@@ -30,11 +30,32 @@ String.prototype.contains = function (str) {
 RegExp.escape = function (s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
+Array.prototype.removeDuplicates = function () {
+    var m = {}, newarr = [];
+    for (var i=0; i<this.length; i++) {
+        var v = this[i];
+        if (!m[v]) {
+            newarr.push(v);
+            m[v]=true;
+        }
+    }
+    return newarr;
+};
+RegExp.prototype.matchAll = function (string) {
+    var matches = [];
+    var match = null;
 
+    while ((match = this.exec(string)) !== null) {
+        matches.push(match[1]);
+    }
+
+    return matches.removeDuplicates();
+};
 
 var count = 0;
 var cookies = request.jar();
 var ids = [];
+var hhemurls = [];
 var newids = [];
 var emailTemplate = fs.readFileSync(__dirname + '/adEmailTemp.html').toString();
 var editedEmailTemplate;
@@ -59,6 +80,7 @@ function start() {
     count = 0;
     cookies = request.jar();
     ids = [];
+    hhemurls = [];
     newids = [];
     editedEmailTemplate = emailTemplate;
 
@@ -238,77 +260,296 @@ initDB(function (status) {
                             });
 
 
-                            if (ids.length > 0) {
-                                //Remove from DB
-                                console.log(getDateTime() + '  ' + ids.length + ' Ads removed!');
-                                ids.forEach(function (value, index) {
-                                    DB('DELETE FROM ava***REMOVED***ble where id="' + ids[index] + '"');
-                                    console.log(getDateTime() + '  ID: ' + ids[index] + ' removed!');
-                                    ids = ids.remove(ids[index]);
+                            request({
+                                pool: {maxSockets: 25},
+                                uri: 'https://bostad.hasselbyhem.se/',
+                                method: "GET",
+                                timeout: 15000,
+                                headers: {
+                                    'Host': 'bostad.hasselbyhem.se',
+                                    'Upgrade-Insecure-Requests': 1,
+                                    'DNT': 1,
+                                    'Cache-Control': 'max-age=0',
+                                    'Origin': 'https://bostad.hasselbyhem.se',
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                    'Referer': 'https://bostad.hasselbyhem.se/',
+                                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+                                    'Accept-Encoding': 'gzip, deflate, br',
+                                    'Accept-Language': 'en-US,en;q=0.9,sv;q=0.8,it;q=0.7',
+                                    'User-Agent': config.chrome_ua,
+                                    'Connection': 'keep-alive'
+                                },
+                                followRedirect: true,
+                                strictSSL: false,
+                                jar: cookies,
+                                proxy: config.proxy,
+                                maxRedirects: 10
+                            }, function(err, res, body){
+
+                                var cmguidurl = res.request.uri.href;
+                                var oldcmguid = extractBetweenStrings(body, 'cmguid=', '">here')[0];
+                                var eventvalidation = extractBetweenStrings(body, 'EVENTVALIDATION" value="', '" />')[0];
+                                var viewstate = extractBetweenStrings(body, 'VIEWSTATE" value="', '" />')[0];
+                                var viewstate2 = extractBetweenStrings(body, 'VIEWSTATEGENERATOR" value="', '" />')[0];
+
+                                request({
+                                    pool: {maxSockets: 25},
+                                    uri: cmguidurl,
+                                    method: "POST",
+                                    timeout: 15000,
+                                    headers: {
+                                        'Host': 'bostad.hasselbyhem.se',
+                                        'Upgrade-Insecure-Requests': 1,
+                                        'DNT': 1,
+                                        'Cache-Control': 'max-age=0',
+                                        'Origin': 'https://bostad.hasselbyhem.se',
+                                        'Content-Type': 'application/x-www-form-urlencoded',
+                                        'Referer': 'https://bostad.hasselbyhem.se/User/MyPagesLogin.aspx',
+                                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+                                        'Accept-Encoding': 'gzip, deflate, br',
+                                        'Accept-Language': 'en-US,en;q=0.9,sv;q=0.8,it;q=0.7',
+                                        'User-Agent': config.chrome_ua,
+                                        'Connection': 'keep-alive'
+                                    },
+                                    followRedirect: true,
+                                    strictSSL: false,
+                                    jar: cookies,
+                                    proxy: config.proxy,
+                                    maxRedirects: 10,
+                                    form: {
+                                        '__LASTFOCUS': '',
+                                        '__EVENTTARGET': '',
+                                        '__EVENTARGUMENT': '',
+                                        '__VIEWSTATE': viewstate,
+                                        '__VIEWSTATEGENERATOR': viewstate2,
+                                        '__EVENTVALIDATION': eventvalidation,
+                                        'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col2$LoginControl1$txtUserID': '***REMOVED***',
+                                        "ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col2$LoginControl1$txtPassword": config.password,
+                                        'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col2$LoginControl1$btnLogin': 'OK',
+                                        'ctl00$ctl01$SearchSimple$autocompleteTreefilter': '',
+                                        'ctl00$ctl01$SearchSimple$txtSearch': '',
+                                        'ctl00$ctl01$hdnBrowserCheck': ''
+                                    },
+                                }, function (err, res, body) {
+
+                                    newcmguid = extractBetweenStrings(body, 'cmguid=', '">here')[0];
+                                    var eventvalidation = extractBetweenStrings(body, 'EVENTVALIDATION" value="', '" />')[0];
+                                    var viewstate = extractBetweenStrings(body, 'VIEWSTATE" value="', '" />')[0];
+                                    var viewstate2 = extractBetweenStrings(body, 'VIEWSTATEGENERATOR" value="', '" />')[0];
+
+                                    request({
+                                        pool: {maxSockets: 25},
+                                        uri: 'https://bostad.hasselbyhem.se/User/MyPages.aspx?cmguid=' + newcmguid,
+                                        method: "GET",
+                                        timeout: 15000,
+                                        headers: {
+                                            'Host': 'bostad.hasselbyhem.se',
+                                            'Upgrade-Insecure-Requests': 1,
+                                            'DNT': 1,
+                                            'Cache-Control': 'max-age=0',
+                                            'Origin': 'https://bostad.hasselbyhem.se',
+                                            'Content-Type': 'application/x-www-form-urlencoded',
+                                            'Referer': 'https://bostad.hasselbyhem.se/User/MyPagesLogin.aspx?cmguid=' + oldcmguid,
+                                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+                                            'Accept-Encoding': 'gzip, deflate, br',
+                                            'Accept-Language': 'en-US,en;q=0.9,sv;q=0.8,it;q=0.7',
+                                            'User-Agent': config.chrome_ua,
+                                            'Connection': 'keep-alive'
+                                        },
+                                        followRedirect: true,
+                                        strictSSL: false,
+                                        jar: cookies,
+                                        proxy: config.proxy,
+                                        maxRedirects: 10,
+
+                                    }, function (err, res, body) {
+
+                                        var eventvalidation = extractBetweenStrings(body, 'EVENTVALIDATION" value="', '" />')[0];
+                                        var viewstate = extractBetweenStrings(body, 'VIEWSTATE" value="', '" />')[0];
+                                        var viewstate2 = extractBetweenStrings(body, 'VIEWSTATEGENERATOR" value="', '" />')[0];
+
+                                        request({
+                                            pool: {maxSockets: 25},
+                                            uri: 'https://bostad.hasselbyhem.se/User/MyPages.aspx',
+                                            method: "POST",
+                                            timeout: 15000,
+                                            headers: {
+                                                'Host': 'bostad.hasselbyhem.se',
+                                                'Upgrade-Insecure-Requests': 1,
+                                                'DNT': 1,
+                                                'Cache-Control': 'max-age=0',
+                                                'Origin': 'https://bostad.hasselbyhem.se',
+                                                'Content-Type': 'application/x-www-form-urlencoded',
+                                                'Referer': 'https://bostad.hasselbyhem.se/User/MyPages.aspx?cmguid=' + newcmguid,
+                                                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+                                                'Accept-Encoding': 'gzip, deflate, br',
+                                                'Accept-Language': 'en-US,en;q=0.9,sv;q=0.8,it;q=0.7',
+                                                'User-Agent': config.chrome_ua,
+                                                'Connection': 'keep-alive'
+                                            },
+                                            followRedirect: true,
+                                            strictSSL: false,
+                                            jar: cookies,
+                                            proxy: config.proxy,
+                                            maxRedirects: 10,
+                                            form: {
+                                                '__EVENTTARGET': 'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$ListAva***REMOVED***ble$btnAva***REMOVED***bleApartments',
+                                                '__EVENTARGUMENT': '',
+                                                '__VIEWSTATE': viewstate,
+                                                '__VIEWSTATEGENERATOR': viewstate2,
+                                                '__EVENTVALIDATION': eventvalidation,
+                                                'ctl00$ctl01$SearchSimple$autocompleteTreefilter': '',
+                                                'ctl00$ctl01$SearchSimple$txtSearch': '',
+                                                'ctl00$ctl01$hdnBrowserCheck': ''
+                                            },
+                                        }, function (err, res, body) {
+
+                                            var newurl = extractBetweenStrings(body, 'Object moved to <a href="', '">here')[0];
+                                            newurl= newurl.replace(/&amp;/g, '&');
+
+                                            request({
+                                                pool: {maxSockets: 25},
+                                                uri: 'https://bostad.hasselbyhem.se' + newurl,
+                                                method: "GET",
+                                                timeout: 15000,
+                                                headers: {
+                                                    'Host': 'bostad.hasselbyhem.se',
+                                                    'Upgrade-Insecure-Requests': 1,
+                                                    'DNT': 1,
+                                                    'Cache-Control': 'max-age=0',
+                                                    'Origin': 'https://bostad.hasselbyhem.se',
+                                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                                    'Referer': 'https://bostad.hasselbyhem.se/User/MyPages.aspx?cmguid=' + newcmguid,
+                                                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+                                                    'Accept-Encoding': 'gzip, deflate, br',
+                                                    'Accept-Language': 'en-US,en;q=0.9,sv;q=0.8,it;q=0.7',
+                                                    'User-Agent': config.chrome_ua,
+                                                    'Connection': 'keep-alive'
+                                                },
+                                                followRedirect: true,
+                                                strictSSL: false,
+                                                jar: cookies,
+                                                proxy: config.proxy,
+                                                maxRedirects: 10,
+                                            }, function (err, res, body) {
+
+                                                var ava***REMOVED***bleArr = extractBetweenStrings(body, 'ObjectDetailsTemplateB.aspx?cmguid=', '">');
+
+                                                ava***REMOVED***bleArr.forEach(function (element) {
+                                                    element = element.replace(/&amp;/g, '&');
+                                                    var id = element.split('objectguid=')[1];
+                                                    var url = 'https://bostad.hasselbyhem.se/HSS/Object/ObjectDetailsTemplateB.aspx?cmguid=' + element;
+
+                                                    hhemurls.push(url);
+
+                                                    count ++;
+
+
+
+                                                    if (!ids.contains(id)) {
+                                                        newids.push(id);
+                                                        ids = ids.remove(id);
+                                                    } else if (ids.contains(id)) {
+                                                        ids = ids.remove(id);
+                                                    }
+
+                                                });
+
+                                                    if (ids.length > 0) {
+                                                        //Remove from DB
+                                                        console.log(getDateTime() + '  ' + ids.length + ' Ads removed!');
+                                                        ids.forEach(function (value, index) {
+                                                            DB('DELETE FROM ava***REMOVED***ble where id="' + ids[index] + '"');
+                                                            console.log(getDateTime() + '  ID: ' + ids[index] + ' removed!');
+                                                            ids = ids.remove(ids[index]);
+                                                        });
+                                                    }
+
+                                                    if (newids.length > 0) {
+                                                        console.log(getDateTime() + '  ' + newids.length + ' New Ads Detected!');
+
+                                                        var newLinks = '';
+                                                        var mysqlQuery = '';
+                                                        newids.forEach(function (value, index) {
+                                                            if (newids.length == index + 1) {
+                                                                mysqlQuery += "('" + newids[index] + "')";
+                                                            } else {
+                                                                mysqlQuery += "('" + newids[index] + "'),";
+                                                            }
+
+                                                            if (newids[index].length > 20) {
+                                                                hhemurls.forEach(function (element) {
+                                                                    if (element.contains(newids[index])) {
+                                                                        newLinks += '<a href="' + element + '">' + newids[index] + '</a><br>';
+                                                                    }
+                                                                })
+
+                                                            } else if (newids[index].length == 14) {
+                                                                newLinks += '<a href="https://marknad.jarfallahus.se/pgObjectInformation.aspx?company=1&obj=' + newids[index] + '">' + newids[index] + '</a><br>';
+                                                            } else if (newids[index].length == 13) {
+                                                                newLinks += '<a href="https://marknad.upplands-brohus.se/pgObjectInformation.aspx?company=1&obj=' + newids[index] + '">' + newids[index] + '</a><br>';
+                                                            } else {
+                                                                newLinks += '<a href="https://bostad.stockholm.se/Lista/Details/?aid=' + newids[index] + '">' + newids[index] + '</a><br>';
+                                                            }
+                                                        });
+
+                                                        editedEmailTemplate = emailTemplate
+                                                            .replace('{IMGURL1}', 'https://jarfallahus.se/Global/LogoTypes/JarfallahusLogo352px.png')
+                                                            .replace('{IMGURL2}', 'https://static.hitta.se/static/products/images/InfoText/bostadsformedlingen-il.gif')
+                                                            .replace('{IMGURL3}', 'https://upplands-brohus.se/wp-content/themes/ubh-theme/images/logo.png')
+                                                            .replace('{IMGURL4}', 'https://bostad.hasselbyhem.se/Res/Themes/Hasselbyhem/Img/Hasselbyhem_logo.png')
+                                                            .replace('{DATETIME}', getDateTime(false, true))
+                                                            .replace('{VERSION}', config.version)
+                                                            .replace('{IP}', getIP())
+                                                            .replace('{LINKS}', newLinks);
+
+                                                        sendEmail({
+                                                            from: '"Bostadsförmedlingen" <***REMOVED***acc1@gmail.com>', // sender address
+                                                            to: [
+                                                                '***REMOVED******REMOVED******REMOVED***'
+                                                            ], // list of receivers separated by comma
+                                                            subject: 'BF Nya Lägenheter! ✔', // Subject line
+                                                            /*text: 'BF Nya Lägenheter! ✔<br>' // plaintext body*/
+                                                            html: editedEmailTemplate // html body
+                                                        }, function (success) {
+
+                                                            if (!success) {
+                                                                return console.log('EMAIL ERROR');
+                                                            }
+                                                            DB("INSERT INTO ava***REMOVED***ble (id) VALUES " + mysqlQuery + " ON DUPLICATE KEY UPDATE id=id");
+                                                            //console.log('\nTotal Ava***REMOVED***ble Apartments: ' + count);
+                                                            console.log('E-mail sent');
+                                                            //job.stop();
+                                                        });
+                                                    } else {
+                                                        if (timesCount == 0 || timesCount > 23) {
+                                                            console.log(getDateTime() + '  Inga nya lägenheter!');
+                                                        }
+                                                        //console.log('\nTotal Ava***REMOVED***ble Apartments: ' + count);
+                                                    }
+
+                                                    if (timesCount == 0 || timesCount > 23) {
+                                                        timesCount = 0;
+                                                        console.log("Database connected!\n".cyan);
+                                                        console.log(getDateTime() + '  BOT is Running!'.cyan);
+                                                    }
+                                                    timesCount++;
+
+
+                                            });
+                                        });
+                                    });
+
+
+                                    /* if (res.statusCode == 302) {
+                                         cb(true);
+                                     } else if (err) {throw err;}
+                                     else {
+                                         cb(false);
+                                     }*/
                                 });
-                            }
+                            });
 
-                            if (newids.length > 0) {
-                                console.log(getDateTime() + '  ' + newids.length + ' New Ads Detected!');
-
-                                var newLinks = '';
-                                var mysqlQuery = '';
-                                newids.forEach(function (value, index) {
-                                    if (newids.length == index + 1) {
-                                        mysqlQuery += "('" + newids[index] + "')";
-                                    } else {
-                                        mysqlQuery += "('" + newids[index] + "'),";
-                                    }
-
-                                    if (newids[index].length == 14) {
-                                        newLinks += '<a href="https://marknad.jarfallahus.se/pgObjectInformation.aspx?company=1&obj=' + newids[index] + '">' + newids[index] + '</a><br>';
-                                    } else if (newids[index].length == 13) {
-                                        newLinks += '<a href="https://marknad.upplands-brohus.se/pgObjectInformation.aspx?company=1&obj=' + newids[index] + '">' + newids[index] + '</a><br>';
-                                    } else {
-                                        newLinks += '<a href="https://bostad.stockholm.se/Lista/Details/?aid=' + newids[index] + '">' + newids[index] + '</a><br>';
-                                    }
-                                });
-
-                                editedEmailTemplate = emailTemplate
-                                    .replace('{IMGURL1}', 'https://jarfallahus.se/Global/LogoTypes/JarfallahusLogo352px.png')
-                                    .replace('{IMGURL2}', 'https://static.hitta.se/static/products/images/InfoText/bostadsformedlingen-il.gif')
-                                    .replace('{IMGURL3}', 'https://upplands-brohus.se/wp-content/themes/ubh-theme/images/logo.png')
-                                    .replace('{DATETIME}', getDateTime(false, true))
-                                    .replace('{VERSION}', config.version)
-                                    .replace('{IP}', getIP())
-                                    .replace('{LINKS}', newLinks);
-
-                                sendEmail({
-                                    from: '"Bostadsförmedlingen" <***REMOVED***acc1@gmail.com>', // sender address
-                                    to: [
-                                        '***REMOVED******REMOVED******REMOVED***'
-                                    ], // list of receivers separated by comma
-                                    subject: 'BF Nya Lägenheter! ✔', // Subject line
-                                    /*text: 'BF Nya Lägenheter! ✔<br>' // plaintext body*/
-                                    html: editedEmailTemplate // html body
-                                }, function (success) {
-
-                                    if (!success) {
-                                        return console.log('EMAIL ERROR');
-                                    }
-                                    DB("INSERT INTO ava***REMOVED***ble (id) VALUES " + mysqlQuery + " ON DUPLICATE KEY UPDATE id=id");
-                                    //console.log('\nTotal Ava***REMOVED***ble Apartments: ' + count);
-                                    console.log('E-mail sent');
-                                    //job.stop();
-                                });
-                            } else {
-                                if (timesCount == 0 || timesCount > 23) {
-                                    console.log(getDateTime() + '  Inga nya lägenheter!');
-                                }
-                                //console.log('\nTotal Ava***REMOVED***ble Apartments: ' + count);
-                            }
-
-                            if (timesCount == 0 || timesCount > 23) {
-                                timesCount = 0;
-                                console.log("Database connected!\n".cyan);
-                                console.log(getDateTime() + '  BOT is Running!'.cyan);
-                            }
-                            timesCount++;
 
                         });
                     });
@@ -513,4 +754,13 @@ function getIP () {
     var res = syncRequest('GET', 'https://www.trackip.net/ip?json');
     return JSON.parse(res.getBody())['IP'];
 
+}
+function extractBetweenStrings(str, start, end) {
+    start = RegExp.escape(start);
+    end = RegExp.escape(end);
+
+    var regex = new RegExp(start + "(.*?)" + end, "igm");
+    var matchedArr = regex.matchAll(str.trim());
+
+    return matchedArr;
 }
