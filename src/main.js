@@ -27,6 +27,9 @@ String.prototype.contains = function (str) {
     str = RegExp.escape(str);
     return this.search(new RegExp(str, "i")) > -1;
 };
+Array.prototype.diff = function(a) {
+    return this.filter(function(i) {return a.indexOf(i) < 0;});
+};
 RegExp.escape = function (s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };
@@ -55,6 +58,7 @@ RegExp.prototype.matchAll = function (string) {
 var count = 0;
 var cookies = request.jar();
 var ids = [];
+var stillava***REMOVED***ble = [];
 var hhemurls = [];
 var newids = [];
 var emailTemplate = fs.readFileSync(__dirname + '/adEmailTemp.html').toString();
@@ -65,7 +69,7 @@ var timesCount = 0;
 
 
 var job = new CronJob({
-    cronTime: '0 * * * *', // Every hour
+    cronTime: '10 * * * *', // Every 1hr10min
     onTick: function() {
         start();
     },
@@ -80,6 +84,7 @@ function start() {
     count = 0;
     cookies = request.jar();
     ids = [];
+    stillava***REMOVED***ble = [];
     hhemurls = [];
     newids = [];
     editedEmailTemplate = emailTemplate;
@@ -159,9 +164,10 @@ initDB(function (status) {
                             }
 
                             newids.push(id);
-                            ids = ids.remove(id);
+                            //ids = ids.remove(id);
                         } else if (ids.contains(id)) {
-                            ids = ids.remove(id);
+                            //ids = ids.remove(id);
+                            stillava***REMOVED***ble.push(id)
                         }
 
                         if ((element['Ungdom'] == true || element['Vanlig'] == true || element['Bostadssnabben'] == true) && element['KanAnmalaIntresse'] == true) {
@@ -208,9 +214,10 @@ initDB(function (status) {
 
                             if (!ids.contains(id)) {
                             newids.push(id);
-                            ids = ids.remove(id);
+                            //ids = ids.remove(id);
                         } else if (ids.contains(id)) {
-                            ids = ids.remove(id);
+                            //ids = ids.remove(id);
+                                stillava***REMOVED***ble.push(id)
                         }
                         });
 
@@ -253,9 +260,10 @@ initDB(function (status) {
 
                                 if (!ids.contains(id)) {
                                     newids.push(id);
-                                    ids = ids.remove(id);
+                                    //ids = ids.remove(id);
                                 } else if (ids.contains(id)) {
-                                    ids = ids.remove(id);
+                                    //ids = ids.remove(id);
+                                    stillava***REMOVED***ble.push(id)
                                 }
                             });
 
@@ -448,20 +456,25 @@ initDB(function (status) {
 
                                                     if (!ids.contains(id)) {
                                                         newids.push(id);
-                                                        ids = ids.remove(id);
+                                                        //ids = ids.remove(id);
                                                     } else if (ids.contains(id)) {
-                                                        ids = ids.remove(id);
+                                                        //ids = ids.remove(id);
+                                                        stillava***REMOVED***ble.push(id)
                                                     }
 
                                                 });
 
-                                                    if (ids.length > 0) {
+
+                                                var removedArr = ids.diff(stillava***REMOVED***ble);
+
+
+                                                    if (removedArr.length > 0) {
                                                         //Remove from DB
-                                                        console.log(getDateTime() + '  ' + ids.length + ' Ads removed!');
-                                                        ids.forEach(function (value, index) {
-                                                            DB('DELETE FROM ava***REMOVED***ble where id="' + ids[index] + '"');
-                                                            console.log(getDateTime() + '  ID: ' + ids[index] + ' removed!');
-                                                            ids = ids.remove(ids[index]);
+                                                        console.log(getDateTime() + '  ' + removedArr.length + ' Ads removed!');
+                                                        removedArr.forEach(function (value, index) {
+                                                            DB('DELETE FROM ava***REMOVED***ble where id="' + removedArr[index] + '"');
+                                                            console.log(getDateTime() + '  ID: ' + removedArr[index] + ' removed!');
+                                                            ids = [];
                                                         });
                                                     }
 
@@ -528,7 +541,7 @@ initDB(function (status) {
                                                         //console.log('\nTotal Ava***REMOVED***ble Apartments: ' + count);
                                                     }
 
-                                                    if (timesCount == 0 || timesCount > 23) {
+                                                    if (timesCount > 23) {
                                                         timesCount = 0;
                                                         console.log("Database connected!\n".cyan);
                                                         console.log(getDateTime() + '  BOT is Running!'.cyan);
@@ -676,6 +689,11 @@ function initDB(cb) {
 
         mysqlConnection.getConnection(function (err, connection) {
             if (!err) {
+                if (timesCount == 0 || timesCount > 23) {
+                    timesCount = 0;
+                    console.log("Database connected!\n".cyan);
+                    console.log(getDateTime() + '  BOT is Running!'.cyan);
+                }
                 //console.log("Database connected!\n");
 
                 connection.query('SELECT * from ava***REMOVED***ble', function (err, rows) {
