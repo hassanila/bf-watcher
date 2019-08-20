@@ -158,7 +158,7 @@ initDB(function (status) {
                                     if (!success) {
                                         return console.log('EMAIL ERROR');
                                     }
-                                    console.log('E-mail sent');
+                                    console.log('E-mail sent\n');
                                     //job.stop();
                                 });
                             }
@@ -254,16 +254,21 @@ initDB(function (status) {
 
                             body['Result'].forEach(function (element) {
                                 var id = element['ObjectNo'];
+                                var type = element['MarketPlaceNo'];
 
-                                count++;
+                                // Only Ledig Direkt
+                                if (type == 100) {
+
+                                    count++;
 
 
-                                if (!ids.contains(id)) {
-                                    newids.push(id);
-                                    //ids = ids.remove(id);
-                                } else if (ids.contains(id)) {
-                                    //ids = ids.remove(id);
-                                    stillava***REMOVED***ble.push(id)
+                                    if (!ids.contains(id)) {
+                                        newids.push(id);
+                                        //ids = ids.remove(id);
+                                    } else if (ids.contains(id)) {
+                                        //ids = ids.remove(id);
+                                        stillava***REMOVED***ble.push(id)
+                                    }
                                 }
                             });
 
@@ -293,6 +298,8 @@ initDB(function (status) {
                                 proxy: config.proxy,
                                 maxRedirects: 10
                             }, function(err, res, body){
+
+                                if (err) throw err;
 
                                 var cmguidurl = res.request.uri.href;
                                 var oldcmguid = extractBetweenStrings(body, 'cmguid=', '">here')[0];
@@ -450,8 +457,7 @@ initDB(function (status) {
 
                                                     hhemurls.push(url);
 
-                                                    count ++;
-
+                                                    count++;
 
 
                                                     if (!ids.contains(id)) {
@@ -464,90 +470,162 @@ initDB(function (status) {
 
                                                 });
 
+                                                request({
+                                                    uri: 'https://sigtunahem.se/widgets/?omraden=&egenskaper=SNABB&objektTyper=&maxAntalDagarPublicerad=&actionId=&callback=&widgets%5B%5D=objektsortering&widgets%5B%5D=objektfilter&widgets%5B%5D=objektlista%40lagenheter&widgets%5B%5D=pagineringgofirst&widgets%5B%5D=pagineringgonew&widgets%5B%5D=pagineringlista&widgets%5B%5D=pagineringgoold&widgets%5B%5D=pagineringgolast&widgets%5B%5D=paginering',
+                                                    method: "GET",
+                                                    timeout: 15000,
+                                                    headers: {
+                                                        'Host': 'sigtunahem.se',
+                                                        'User-Agent': config.chrome_ua,
+                                                        'Accept-Language': '*'
+                                                    },
+                                                    followRedirect: true,
+                                                    strictSSL: false,
+                                                    jar: cookies,
+                                                    proxy: config.proxy,
+                                                    maxRedirects: 10
+                                                }, function (err, res, body) {
+                                                    if (err) throw err;
 
-                                                var removedArr = ids.diff(stillava***REMOVED***ble);
+                                                    var jsonBody = JSON.parse(body.slice(1, -2));
 
 
-                                                    if (removedArr.length > 0) {
-                                                        //Remove from DB
-                                                        console.log(getDateTime() + '  ' + removedArr.length + ' Ads removed!');
-                                                        removedArr.forEach(function (value, index) {
-                                                            DB('DELETE FROM ava***REMOVED***ble where id="' + removedArr[index] + '"');
-                                                            console.log(getDateTime() + '  ID: ' + removedArr[index] + ' removed!');
-                                                            ids = [];
-                                                        });
-                                                    }
 
-                                                    if (newids.length > 0) {
-                                                        console.log(getDateTime() + '  ' + newids.length + ' New Ads Detected!');
+                                                    jsonBody.data["objektlista@lagenheter"].forEach(function (element) {
 
-                                                        var newLinks = '';
-                                                        var mysqlQuery = '';
-                                                        newids.forEach(function (value, index) {
-                                                            if (newids.length == index + 1) {
-                                                                mysqlQuery += "('" + newids[index] + "')";
-                                                            } else {
-                                                                mysqlQuery += "('" + newids[index] + "'),";
-                                                            }
+                                                        var id = (element["hyra"] +
+                                                            element["inflyttningDatum"] +
+                                                            element["byggAr"] +
+                                                            element["yta"]
+                                                        ).replace(/\s/g, "").replace(/-/g, "");
 
-                                                            if (newids[index].length > 20) {
-                                                                hhemurls.forEach(function (element) {
-                                                                    if (element.contains(newids[index])) {
-                                                                        newLinks += '<a href="' + element + '">' + newids[index] + '</a><br>';
-                                                                    }
-                                                                })
+                                                        count++;
 
-                                                            } else if (newids[index].length == 14) {
-                                                                newLinks += '<a href="https://marknad.jarfallahus.se/pgObjectInformation.aspx?company=1&obj=' + newids[index] + '">' + newids[index] + '</a><br>';
-                                                            } else if (newids[index].length == 13) {
-                                                                newLinks += '<a href="https://marknad.upplands-brohus.se/pgObjectInformation.aspx?company=1&obj=' + newids[index] + '">' + newids[index] + '</a><br>';
-                                                            } else {
-                                                                newLinks += '<a href="https://bostad.stockholm.se/Lista/Details/?aid=' + newids[index] + '">' + newids[index] + '</a><br>';
-                                                            }
-                                                        });
 
-                                                        editedEmailTemplate = emailTemplate
-                                                            .replace('{IMGURL1}', 'https://jarfallahus.se/Global/LogoTypes/JarfallahusLogo352px.png')
-                                                            .replace('{IMGURL2}', 'https://static.hitta.se/static/products/images/InfoText/bostadsformedlingen-il.gif')
-                                                            .replace('{IMGURL3}', 'https://upplands-brohus.se/wp-content/themes/ubh-theme/images/logo.png')
-                                                            .replace('{IMGURL4}', 'https://bostad.hasselbyhem.se/Res/Themes/Hasselbyhem/Img/Hasselbyhem_logo.png')
-                                                            .replace('{DATETIME}', getDateTime(false, true))
-                                                            .replace('{VERSION}', config.version)
-                                                            .replace('{IP}', getIP())
-                                                            .replace('{LINKS}', newLinks);
-
-                                                        sendEmail({
-                                                            from: '"Bostadsförmedlingen" <***REMOVED***acc1@gmail.com>', // sender address
-                                                            to: [
-                                                                '***REMOVED******REMOVED***97@gmail.com'
-                                                            ], // list of receivers separated by comma
-                                                            subject: 'BF Nya Lägenheter! ✔', // Subject line
-                                                            /*text: 'BF Nya Lägenheter! ✔<br>' // plaintext body*/
-                                                            html: editedEmailTemplate // html body
-                                                        }, function (success) {
-
-                                                            if (!success) {
-                                                                return console.log('EMAIL ERROR');
-                                                            }
-                                                            DB("INSERT INTO ava***REMOVED***ble (id) VALUES " + mysqlQuery + " ON DUPLICATE KEY UPDATE id=id");
-                                                            //console.log('\nTotal Ava***REMOVED***ble Apartments: ' + count);
-                                                            console.log('E-mail sent');
-                                                            //job.stop();
-                                                        });
-                                                    } else {
-                                                        if (timesCount == 0 || timesCount > 23) {
-                                                            console.log(getDateTime() + '  Inga nya lägenheter!');
+                                                        if (!ids.contains(id)) {
+                                                            newids.push(id);
+                                                            //ids = ids.remove(id);
+                                                        } else if (ids.contains(id)) {
+                                                            //ids = ids.remove(id);
+                                                            stillava***REMOVED***ble.push(id)
                                                         }
+
+                                                    });
+
+
+
+                                                    var removedArr = ids.diff(stillava***REMOVED***ble);
+
+
+                                                if (newids.length > 0) {
+                                                    console.log(getDateTime() + '  ' + newids.length + ' New Ads! & ' + removedArr.length + ' Ads Removed!');
+
+                                                    var newLinks = '';
+                                                    var mysqlQuery = '';
+                                                    var hhemPrefixed = false;
+                                                    var jfhusPrefixed = false;
+                                                    var upbrohusPrefixed = false;
+                                                    var bfPrefixed = false;
+                                                    var sighemPrefixed = false;
+
+                                                    newids.forEach(function (value, index) {
+                                                        if (newids.length == index + 1) {
+                                                            mysqlQuery += "('" + newids[index] + "')";
+                                                        } else {
+                                                            mysqlQuery += "('" + newids[index] + "'),";
+                                                        }
+
+                                                        if (newids[index].length > 17 && newids[index].length < 21) {
+                                                            if (sighemPrefixed == false) {
+                                                                sighemPrefixed = true;
+                                                                newLinks += '<br><h2 style="color:green;">SigtunaHem (Bostadsnabben)</h2>';
+                                                            }
+                                                            newLinks += '<a href="https://sigtunahem.se/sok-ledigt/?omraden=&egenskaper=SNABB">' + newids[index] + '</a><br>';
+                                                        } else if (newids[index].length > 20) {
+                                                            if (hhemPrefixed == false) {
+                                                                hhemPrefixed = true;
+                                                                newLinks += '<br><h2 style="color:green;">Hässelby Hem</h2>';
+                                                            }
+                                                            hhemurls.forEach(function (element) {
+                                                                if (element.contains(newids[index])) {
+                                                                    newLinks += '<a href="' + element + '">' + newids[index] + '</a><br>';
+                                                                }
+                                                            })
+
+                                                        } else if (newids[index].length == 14) {
+                                                            if (jfhusPrefixed == false) {
+                                                                jfhusPrefixed = true;
+                                                                newLinks += '<br><h2 style="color:green;">Järfällahus (Ungdom)</h2>';
+                                                            }
+                                                            newLinks += '<a href="https://marknad.jarfallahus.se/pgObjectInformation.aspx?company=1&obj=' + newids[index] + '">' + newids[index] + '</a><br>';
+                                                        } else if (newids[index].length == 13) {
+                                                            if (upbrohusPrefixed == false) {
+                                                                upbrohusPrefixed = true;
+                                                                newLinks += '<br><h2 style="color:green;">Upplands-Brohus (Ledigt Direkt)</h2>';
+                                                            }
+                                                            newLinks += '<a href="https://marknad.upplands-brohus.se/pgObjectInformation.aspx?company=1&obj=' + newids[index] + '">' + newids[index] + '</a><br>';
+                                                        } else {
+                                                            if (bfPrefixed == false) {
+                                                                bfPrefixed = true;
+                                                                newLinks += '<br><h2 style="color:green;">Bostadsförmedlingen (Ungdom)</h2>';
+                                                            }
+                                                            newLinks += '<a href="https://bostad.stockholm.se/Lista/Details/?aid=' + newids[index] + '">' + newids[index] + '</a><br>';
+                                                        }
+                                                    });
+
+                                                    editedEmailTemplate = emailTemplate
+                                                        .replace('{IMGURL1}', 'https://jarfallahus.se/Global/LogoTypes/JarfallahusLogo352px.png')
+                                                        .replace('{IMGURL2}', 'https://static.hitta.se/static/products/images/InfoText/bostadsformedlingen-il.gif')
+                                                        .replace('{IMGURL3}', 'https://upplands-brohus.se/wp-content/themes/ubh-theme/images/logo.png')
+                                                        .replace('{IMGURL4}', 'https://bostad.hasselbyhem.se/Res/Themes/Hasselbyhem/Img/Hasselbyhem_logo.png')
+                                                        .replace('{IMGURL5}', 'https://greencon.se/wp-content/uploads/2015/11/SigtunaHem-Logo-Landscape-CMYK-till-hemsidan.png')
+                                                        .replace('{DATETIME}', getDateTime(false, true))
+                                                        .replace('{VERSION}', config.version)
+                                                        .replace('{IP}', getIP())
+                                                        .replace('{LINKS}', newLinks);
+
+                                                    sendEmail({
+                                                        from: '"Bostadsförmedlingen" <***REMOVED***acc1@gmail.com>', // sender address
+                                                        to: [
+                                                            '***REMOVED******REMOVED***97@gmail.com'
+                                                        ], // list of receivers separated by comma
+                                                        subject: 'BF Nya Lägenheter! ✔', // Subject line
+                                                        /*text: 'BF Nya Lägenheter! ✔<br>' // plaintext body*/
+                                                        html: editedEmailTemplate // html body
+                                                    }, function (success) {
+
+                                                        if (!success) {
+                                                            return console.log('EMAIL ERROR');
+                                                        }
+                                                        DB("INSERT INTO ava***REMOVED***ble (id) VALUES " + mysqlQuery + " ON DUPLICATE KEY UPDATE id=id");
                                                         //console.log('\nTotal Ava***REMOVED***ble Apartments: ' + count);
+                                                        console.log('E-mail sent\n');
+                                                        //job.stop();
+                                                    });
+                                                } else {
+                                                    if (timesCount == 0 || timesCount > 23) {
+                                                        console.log(getDateTime() + '  Inga nya lägenheter!');
                                                     }
+                                                    //console.log('\nTotal Ava***REMOVED***ble Apartments: ' + count);
+                                                }
 
-                                                    if (timesCount > 23) {
-                                                        timesCount = 0;
-                                                        console.log("Database connected!\n".cyan);
-                                                        console.log(getDateTime() + '  BOT is Running!'.cyan);
-                                                    }
-                                                    timesCount++;
+                                                if (removedArr.length > 0) {
+                                                    //Remove from DB
+                                                    removedArr.forEach(function (value, index) {
+                                                        DB('DELETE FROM ava***REMOVED***ble where id="' + removedArr[index] + '"');
+                                                        console.log(getDateTime() + '  ID: ' + removedArr[index] + ' removed!');
+                                                    });
+                                                    ids = [];
+                                                }
 
+                                                if (timesCount > 23) {
+                                                    timesCount = 0;
+                                                    console.log("Database connected!\n".cyan);
+                                                    console.log(getDateTime() + '  BOT is Running!'.cyan);
+                                                }
+                                                timesCount++;
+
+                                            });
 
                                             });
                                         });

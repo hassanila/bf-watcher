@@ -16,7 +16,7 @@ USE `bf`;
 
 
 CREATE TABLE `ava***REMOVED***ble` (
-  `id` varchar(50) DEFAULT NULL
+  `id` varchar(64) DEFAULT NULL
 );
 
 
