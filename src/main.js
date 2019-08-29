@@ -514,13 +514,11 @@ function start() {
 
                                                         ele.each(function (i, element) {
 
-                                                            //console.log('\nEle: ' + ele.text())
 
                                                             pricesToExclude.push(parseInt($('div.interest-objectinfo ul:nth-child(6) li:nth-child(2)').eq(i).text(), 10));
                                                             //console.log('toexc: ' + pricesToExclude[i])
-                                                            if (ele.text().contains('inte blivit erbjuden visning')) {
+                                                            if (ele.eq(i).text().contains('Du har inte blivit erbjuden visning')) {
                                                                 toDelete.push('https://bostad.hasselbyhem.se' + $('[id$=_hlDeleteTxtApartment]').eq(i).attr('href'));
-                                                                //console.log('Om du blir erbjuden visning :(');
                                                             }
                                                         });
 
@@ -664,6 +662,7 @@ function start() {
 
 
                                                             toDelete.forEach(function (value, i) {
+
 
 
                                                                 request({
