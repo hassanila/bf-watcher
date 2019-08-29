@@ -22,7 +22,7 @@ module.exports = {
     proxies: proxies,
     privacy: false,
     android_ua: 'Android 8.0.0; O; sdk=26; ***REMOVED*** android-55/5.5',
-    chrome_ua: 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36',
+    chrome_ua: 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     proxy: proxies[0],
     captchaProxy: proxies[0],
     logPrefix: 'name', // cid -- email -- name -- msisdn
