@@ -1,5 +1,6 @@
 var request = require('request'),
-    config = require('../config.js');
+    config = require('../config.js'),
+    cheerio = require('cheerio');
 
 
 Array.prototype.contains = function (element) {
@@ -61,112 +62,77 @@ function extractBetweenStrings(str, start, end) {
 }
 
 
-request({
-    pool: {maxSockets: 25},
-    uri: 'https://bostad.hasselbyhem.se/',
-    method: "GET",
-    timeout: 15000,
-    headers: {
-        'Host': 'bostad.hasselbyhem.se',
-        'Upgrade-Insecure-Requests': 1,
-        'DNT': 1,
-        'Cache-Control': 'max-age=0',
-        'Origin': 'https://bostad.hasselbyhem.se',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Referer': 'https://bostad.hasselbyhem.se/',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'en-US,en;q=0.9,sv;q=0.8,it;q=0.7',
-        'User-Agent': config.chrome_ua,
-        'Connection': 'keep-alive'
-    },
-    followRedirect: true,
-    strictSSL: false,
-    jar: cookies,
-    proxy: config.proxy,
-    maxRedirects: 10
-}, function(err, res, body) {
-
-    if (err) throw err;
-
-    var cmguidurl = res.request.uri.href;
-    var oldcmguid = extractBetweenStrings(body, 'cmguid=', '">here')[0];
-    var eventvalidation = extractBetweenStrings(body, 'EVENTVALIDATION" value="', '" />')[0];
-    var viewstate = extractBetweenStrings(body, 'VIEWSTATE" value="', '" />')[0];
-    var viewstate2 = extractBetweenStrings(body, 'VIEWSTATEGENERATOR" value="', '" />')[0];
 
     request({
-        pool: {maxSockets: 25},
-        uri: cmguidurl,
-        method: "POST",
+        uri: 'https://cl-lettings-web.azurewebsites.net/api/v2/cities/SE/apartment?advertStatus=published',
+        method: "GET",
         timeout: 15000,
         headers: {
-            'Host': 'bostad.hasselbyhem.se',
-            'Upgrade-Insecure-Requests': 1,
-            'DNT': 1,
-            'Cache-Control': 'max-age=0',
-            'Origin': 'https://bostad.hasselbyhem.se',
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Referer': 'https://bostad.hasselbyhem.se/User/MyPagesLogin.aspx',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Accept-Language': 'en-US,en;q=0.9,sv;q=0.8,it;q=0.7',
+            'Host': 'cl-lettings-web.azurewebsites.net',
             'User-Agent': config.chrome_ua,
-            'Connection': 'keep-alive'
+            'Accept-Language': '*'
         },
         followRedirect: true,
         strictSSL: false,
         jar: cookies,
         proxy: config.proxy,
-        maxRedirects: 10,
-        form: {
-            '__LASTFOCUS': '',
-            '__EVENTTARGET': '',
-            '__EVENTARGUMENT': '',
-            '__VIEWSTATE': viewstate,
-            '__VIEWSTATEGENERATOR': viewstate2,
-            '__EVENTVALIDATION': eventvalidation,
-            'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col2$LoginControl1$txtUserID': '***REMOVED***',
-            "ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col2$LoginControl1$txtPassword": config.password,
-            'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col2$LoginControl1$btnLogin': 'OK',
-            'ctl00$ctl01$SearchSimple$autocompleteTreefilter': '',
-            'ctl00$ctl01$SearchSimple$txtSearch': '',
-            'ctl00$ctl01$hdnBrowserCheck': ''
-        },
+        maxRedirects: 10
     }, function (err, res, body) {
+        if (err) throw err;
 
-        newcmguid = extractBetweenStrings(body, 'cmguid=', '">here')[0];
-        var eventvalidation = extractBetweenStrings(body, 'EVENTVALIDATION" value="', '" />')[0];
-        var viewstate = extractBetweenStrings(body, 'VIEWSTATE" value="', '" />')[0];
-        var viewstate2 = extractBetweenStrings(body, 'VIEWSTATEGENERATOR" value="', '" />')[0];
 
-        request({
-            pool: {maxSockets: 25},
-            uri: 'https://bostad.hasselbyhem.se/HSS/ObjectInterest/ListInterest.aspx',
-            method: "GET",
-            timeout: 15000,
-            headers: {
-                'Host': 'bostad.hasselbyhem.se',
-                'Upgrade-Insecure-Requests': 1,
-                'DNT': 1,
-                'Cache-Control': 'max-age=0',
-                'Origin': 'https://bostad.hasselbyhem.se',
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Referer': 'https://bostad.hasselbyhem.se/User/MyPagesLogin.aspx?cmguid=' + oldcmguid,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Accept-Language': 'en-US,en;q=0.9,sv;q=0.8,it;q=0.7',
-                'User-Agent': config.chrome_ua,
-                'Connection': 'keep-alive'
-            },
-            followRedirect: true,
-            strictSSL: false,
-            jar: cookies,
-            proxy: config.proxy,
-            maxRedirects: 10,
+        var body1 = JSON.parse(body).data;
 
-        }, function (err, res, body) {
+        var counting = 0;
+        body1.forEach(function (element, i) {
+            var name = element['name'].toString().toLowerCase()
+                .replace('ä', 'a')
+                .replace('å', 'a')
+                .replace('ö', 'o');
+
+
+            if (name != 'malmo') {
+                var url = element['_links']['teasers'];
+
+                request({
+                    uri: 'https://cl-lettings-web.azurewebsites.net' + url,
+                    method: "GET",
+                    timeout: 15000,
+                    headers: {
+                        'Host': 'cl-lettings-web.azurewebsites.net',
+                        'User-Agent': config.chrome_ua,
+                        'Accept-Language': '*'
+                    },
+                    followRedirect: true,
+                    strictSSL: false,
+                    jar: cookies,
+                    proxy: config.proxy,
+                    maxRedirects: 10
+                }, function (err, res, body) {
+                    if (err) throw err;
+
+                    counting++;
+
+                    body = JSON.parse(body).data;
+
+                    body.forEach(function (element, index) {
+
+                        var id = element['unitId'];
+                        console.log(id);
+                        console.log('https://www.akelius.se/site/search/apartment/' + name + '/' + id.split('.')[0] + '/' + id);
+                        if (body1.length == counting) {
+                            console.log('Done!');
+                            process.exit()
+                        }
+                    });
+
+
+
+                });
+            }
 
         });
-    })
-});
+
+
+
+    });
