@@ -63,76 +63,39 @@ function extractBetweenStrings(str, start, end) {
 
 
 
-    request({
-        uri: 'https://cl-lettings-web.azurewebsites.net/api/v2/cities/SE/apartment?advertStatus=published',
-        method: "GET",
-        timeout: 15000,
-        headers: {
-            'Host': 'cl-lettings-web.azurewebsites.net',
-            'User-Agent': config.chrome_ua,
-            'Accept-Language': '*'
-        },
-        followRedirect: true,
-        strictSSL: false,
-        jar: cookies,
-        proxy: config.proxy,
-        maxRedirects: 10
-    }, function (err, res, body) {
-        if (err) throw err;
+request({
+    pool: {maxSockets: 25},
+    uri: 'https://***REMOVED******REMOVED***.net/ListInterest',
+    method: "GET",
+    timeout: 15000,
+    followRedirect: true,
+    strictSSL: false,
+    jar: cookies,
+    proxy: config.proxy,
+    maxRedirects: 10,
 
+}, function (err, res, body) {
 
-        var body1 = JSON.parse(body).data;
+    var $ = cheerio.load(body);
 
-        var counting = 0;
-        body1.forEach(function (element, i) {
-            var name = element['name'].toString().toLowerCase()
-                .replace('ä', 'a')
-                .replace('å', 'a')
-                .replace('ö', 'o');
+    var ele = $('.interest-footer p');
+    var toDelete = [];
+    var pricesToExclude = []
 
+    ele.each(function (i, element) {
 
-            if (name != 'malmo') {
-                var url = element['_links']['teasers'];
+        //console.log('\nEle: ' + ele.text())
 
-                request({
-                    uri: 'https://cl-lettings-web.azurewebsites.net' + url,
-                    method: "GET",
-                    timeout: 15000,
-                    headers: {
-                        'Host': 'cl-lettings-web.azurewebsites.net',
-                        'User-Agent': config.chrome_ua,
-                        'Accept-Language': '*'
-                    },
-                    followRedirect: true,
-                    strictSSL: false,
-                    jar: cookies,
-                    proxy: config.proxy,
-                    maxRedirects: 10
-                }, function (err, res, body) {
-                    if (err) throw err;
-
-                    counting++;
-
-                    body = JSON.parse(body).data;
-
-                    body.forEach(function (element, index) {
-
-                        var id = element['unitId'];
-                        console.log(id);
-                        console.log('https://www.akelius.se/site/search/apartment/' + name + '/' + id.split('.')[0] + '/' + id);
-                        if (body1.length == counting) {
-                            console.log('Done!');
-                            process.exit()
-                        }
-                    });
-
-
-
-                });
-            }
-
-        });
-
-
-
+        pricesToExclude.push(parseInt($('div.interest-objectinfo ul:nth-child(6) li:nth-child(2)').eq(i).text(), 10));
+        //console.log(pricesToExclude[i])
+        //console.log('toexc: ' + pricesToExclude[i])
+        if (ele.eq(i).text().contains('Du har inte blivit erbjuden visning')) {
+            console.log(ele.eq(i).text())
+            console.log(i)
+            toDelete.push('https://bostad.hasselbyhem.se' + $('[id$=_hlDeleteTxtApartment]').eq(i).attr('href'));
+            console.log(toDelete[0])
+            //console.log('Om du blir erbjuden visning :(');
+        }
     });
+    process.exit()
+});
