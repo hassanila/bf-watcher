@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>BF Watcher Status</title>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+
+    <style type="text/css">
+
+
+        @media all and (min-width: 500px) {
+            table {
+                min-width: 420px;
+            }
+        }
+
+        @media all and (max-width: 500px) {
+            table {
+                min-width: 340px;
+            }
+
+            .column1 img {
+                margin-right: 10px;
+            }
+        }
+
+
+        #logo {
+            min-height: 50px;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 10px;
+            display: flex;
+            background-color: black;
+            border-bottom: white;
+            border-style: double;
+            border-width: 1px;
+            margin-bottom: 4.5em;
+            text-align: center;
+            padding-top: 10px;
+        }
+
+        #logo img {
+            pointer-events: none;
+            height: 50px;
+        }
+
+        #logo h2 {
+            font-family: initial;
+            color: white;
+        }
+
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -webkit-text-size-adjust: none;
+            background: #000000;
+            width: 100% !important;
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none;
+        }
+
+        .column1 a {
+            display: block;
+            padding-left: 15px;
+            padding-top: 23px;
+            padding-bottom: 23px;
+            text-decoration: none;
+            color: #6bc7ff;
+            background-color: #0025ff1a;
+        }
+
+        .table-head .column1 {
+            padding-left: 15px;
+        }
+
+        .column1 a:visited {
+            /*color: #7238ff;*/
+        }
+
+        .column1 a:hover {
+            color: #26ff9d;
+        }
+
+        table {
+            /*max-width: 42em;*/
+            border-spacing: 0 0;
+            border: solid white 1px;
+            background: #000000;
+            border-radius: 7px;
+            overflow: hidden;
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 800px;
+        }
+
+        table thead tr {
+            height: 60px;
+            background: #135032;
+        }
+
+
+        .table-head th {
+            font-size: 17px;
+            padding-top: 20px;
+            text-align: left;
+            border-spacing: 0;
+            font-family: 'Oxygen', 'Helvetica Neue', 'Arial', 'sans-serif';
+            color: #0ff;
+        }
+
+
+        tbody tr:not(:first-child) {
+            box-shadow: inset 0 1px 0 0 rgb(117, 117, 117);
+            font-family: 'Oxygen', 'Helvetica Neue', 'Arial', 'sans-serif';
+        }
+
+
+        tbody tr:hover {
+            background-color: #191919;
+        }
+
+        .column1,
+        .column2,
+        .column3,
+        .column4 {
+            width: 18%;
+            font-size: 13px;
+            color: white;
+            margin-left: 10px;
+        }
+
+        .table-head .column1,
+        .table-head .column2,
+        .table-head .column3,
+        .table-head .column4 {
+            padding-bottom: 8px;
+        }
+
+
+        .column1 img {
+            width: 100px;
+            pointer-events: none;
+        }
+
+        .column1 a {
+            width: 130px;
+            height: 53px;
+            padding-left: 25px;
+            display: block;
+            padding-top: 0px;
+            padding-bottom: 0px;
+        }
+
+        #footer {
+            font-size: 13px;
+            background-color: black;
+            width: 100%;
+            color: white;
+            white-space: pre;
+            font-family: monospace;
+            margin-top: 35px;
+        }
+
+        .allButFooter {
+            /*min-width: 27em;*/
+            background-color: black;
+            min-height: calc(100vh - 80px);
+        }
+
+        #updateButton {
+            vertical-align: middle;
+            outline: none;
+            border-radius: 15px;
+            display: inline;
+            color: white;
+            height: 44px;
+            width: 99px;
+            padding: 0 0;
+            border: 2px solid #00ff0a;
+            background-color: #0036c1;
+            cursor: pointer;
+        }
+
+        #updateButton div.checking {
+            margin: auto;
+        }
+
+        #updateButton:hover:not(.checking) {
+            background-color: #00175b
+        }
+
+        #updateButton:active:not(.checking) {
+            background-color: #001d67;
+            transform: translateY(4px);
+        }
+
+        #updateButton.checking {
+            background-color: #0047ff87;
+            cursor: initial;
+        }
+
+        #restartButton {
+            background-color: #c1000d;
+            vertical-align: middle;
+            outline: none;
+            border-radius: 15px;
+            display: inline;
+            color: white;
+            height: 44px;
+            width: 99px;
+            padding: 0 0;
+            border: 2px solid #00ff0a;
+            cursor: pointer;
+        }
+
+        #restartButton:hover:not(.restarting) {
+            background-color: #6b0300
+        }
+
+        #restartButton:active:not(.restarting) {
+            background-color: #67000a;
+            transform: translateY(4px);
+        }
+
+        #restartButton div.checking {
+            margin: auto;
+        }
+
+        #restartButton.restarting {
+            background-color: #5a0006;
+            cursor: initial;
+        }
+
+
+
+        #buttonsContainer {
+            display: block;
+            margin-bottom: 23px;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        td.column2 {
+            font-size: 20px;
+            font-weight: 900;
+        }
+
+        .column2.checked {
+            color: #009400;
+        }
+
+        .column2.checking {
+            color: #009400;
+        }
+
+        .column2.nocheck {
+            color: #949494;
+        }
+
+        .column2.error, .column2.other {
+            color: #ff0000;
+        }
+
+        .column2.excluded {
+            color: #ff8d00;
+        }
+
+        .erroralert {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background-color: #bb0d00;
+            margin-bottom: 20px;
+            font-weight: 900;
+            color: white;
+        }
+
+        div.checking {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgb(255, 255, 255);
+            border-top-color: rgba(0, 0, 0, 0);
+            border-radius: 50%;
+            -webkit-animation: rotation 1.2s linear infinite;
+            animation: rotation 1.2s linear infinite;
+        }
+
+        @-webkit-keyframes rotation {
+            from {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            to {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes rotation {
+            from {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+            }
+            to {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+
+        .blink {
+            -webkit-animation: blink 1s step-end infinite;
+            -moz-animation: blink 1s step-end infinite;
+            -o-animation: blink 1s step-end infinite;
+            animation: blink 1s step-end infinite;
+        }
+
+        @-webkit-keyframes blink {
+            67% {
+                opacity: 0
+            }
+        }
+
+        @-moz-keyframes blink {
+            67% {
+                opacity: 0
+            }
+        }
+
+        @-o-keyframes blink {
+            67% {
+                opacity: 0
+            }
+        }
+
+        @keyframes blink {
+            67% {
+                opacity: 0
+            }
+        }
+
+
+        #datetimeContainer {
+            min-height: 36px;
+            color: white;
+            text-align: center;
+            font-family: monospace;
+            font-size: 30px;
+            margin-bottom: 15px;
+        }
+
+        [error]:hover:after {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        [error]:after {
+            content: attr(error);
+            background-color: #ff0000;
+            color: #111;
+            position: absolute;
+            padding: 1px 5px 2px 5px;
+            width: 100%;
+            /*bottom: -1.2em;*/
+            right: -8em;
+            opacity: 0;
+            visibility: hidden;
+            font-family: monospace;
+            box-shadow: 1px 1px 14px 0px #ffffff;
+            border: 2px solid #111111;
+            z-index: 99999;
+        }
+
+        [error] {
+            position: relative;
+        }
+
+    </style>
+    <link href="img/png/small/icon.png" rel="shortcut icon" type="image/png"/>
+</head>
+<body>
+
+<div class="allButFooter">
+    <div id="logo">
+        <a href="/bf-watcher"><img alt="logo" draggable="false" src="img/png/small/logo.png"></a>
+    </div>
+
+    <div id="datetimeContainer">
+        <span>{TIME}</span>
+    </div>
+
+    <div id="buttonsContainer">
+        <button id="updateButton">Update</button>
+        <button id="restartButton">Restart</button>
+    </div>
+
+    <div class="erroralert">
+        <!--<span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>-->
+
+    </div>
+
+    <table>
+        <thead>
+        <tr class="table-head">
+            <th class="column1">Site</th>
+            <th class="column2">Last Status</th>
+            <th class="column3">Last Checked</th>
+            <th class="column4">Auto</th>
+        </tr>
+        </thead>
+
+        {TBODY}
+
+
+    </table>
+</div>
+<footer id="footer">BF Watcher v{VERSION}
+LAST CHECK: {LASTCHECK}
+NEXT CHECK: {NEXTCHECK}
+   STARTED: {STARTDATETIME}
+        IP: {IP}
+</footer>
+<script src="./timesync/timesync.js" type="text/javascript"></script>
+<script src="./scripts/jquery-3.4.1.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+
+
+    // create a timesync instance
+    let ts = timesync.create({
+        server: 'timesync',
+        interval: 5 * 60000,
+        delay: 500,
+        repeat: 5
+    });
+    let firstLogs = true;
+
+    function updateTime() {
+        var now = (new Date(ts.now()));
+
+
+        var formater = new Intl.DateTimeFormat('sv-SE', {
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            timeZone: 'Europe/Stockholm'
+        });
+
+        $('#datetimeContainer span').eq(0).html(formater.format(now));
+
+        setTimeout(updateTime, 1000 - (now.getTime() % 1000));
+    }
+
+
+    ts.on('change', function (offset) {
+        if (firstLogs || Math.abs(offset) > 30) {
+            console.log('Offset = ' + offset + ' ms');
+        }
+    });
+
+    setTimeout(() => {
+        firstLogs = false;
+    }, 5000);
+
+    ts.on('sync', function (type) {
+        if (type === 'end') {
+            console.log('The time has been synced!');
+            return ts.off('sync');
+        }
+        console.log('Syncing time!');
+    });
+
+    updateTime();
+
+
+    let wss;
+    let errorCount = 0;
+    let countdownInterval;
+    let reconnectTimeout;
+    let showErrorTimeout;
+    let firstMessage = true;
+    let firstRun = true;
+    let isRestarting = false;
+
+    let connect = function () {
+
+        clearInterval(countdownInterval);
+
+        if (!firstRun) {
+
+            $('.erroralert').eq(0).html('Reconnecting...');
+
+            countdownInterval = setInterval(function () {
+                $('.erroralert').eq(0).append('.');
+            }, 1000);
+        }
+
+        firstRun = false;
+
+
+        wss = new WebSocket('wss://***REMOVED******REMOVED***.net:3293');
+
+        wss.onopen = function () {
+
+            if (errorCount > 1 || isRestarting) {
+                return location.reload();
+            }
+
+            isRestarting = false;
+
+            errorCount = 0;
+
+            clearInterval(countdownInterval);
+            clearTimeout(showErrorTimeout);
+            console.log('Socket sucessfully opened!');
+            $('.erroralert').eq(0).hide();
+        };
+
+        wss.onmessage = (data) => {
+
+            try {
+                let obj = JSON.parse(data.data);
+
+                console.log('Got message from server!');
+
+                if (obj.restarting === true) {
+
+                    console.log('Server is restarting... reconnecting in 3.5s');
+                    let errorAlert = $('.erroralert').eq(0);
+                    errorAlert.show().html('Restarting...');
+                    $('#restartButton').eq(0).addClass('restarting').html('<div class="checking"></div>');
+
+                    clearInterval(countdownInterval);
+
+                    countdownInterval = setInterval(function () {
+                        errorAlert.append('.');
+                    }, 1000);
+
+
+                    isRestarting = true;
+
+
+                    return wss.close();
+                }
+
+                let updateBtn = $('#updateButton').eq(0);
+                let btnHtml = updateBtn.html();
+
+                if (btnHtml !== '<div class="checking"></div>' && obj.currentlyRunning) {
+                    updateBtn.addClass('checking').html('<div class="checking"></div>');
+                } else if (btnHtml !== 'Update' && !(obj.currentlyRunning)) {
+                    updateBtn.removeClass('checking').html('Update');
+                }
+
+                let newestCheck = '2019-11-21 01:38:22';
+
+                for (let site in obj.lastCheckedObj) {
+                    if (obj.lastCheckedObj.hasOwnProperty(site)) {
+
+                        if (obj.lastCheckedObj[site].lastChecked && obj.lastCheckedObj[site].lastChecked.match(/\d{4}/) !== null && obj.lastCheckedObj[site].lastChecked > newestCheck) {
+                            newestCheck = obj.lastCheckedObj[site].lastChecked;
+                        }
+
+
+                        let column2Html = '';
+
+                        if (obj.lastCheckedObj[site].status) {
+                            switch (obj.lastCheckedObj[site].status) {
+                                case 'checked':
+                                    column2Html = 'Checked';
+                                    break;
+                                case 'checking':
+                                    column2Html = '<div class="checking"></div>';
+                                    break;
+                                case 'nocheck':
+                                    column2Html = 'None';
+                                    break;
+                                case 'error':
+
+                                    try {
+                                        let errorCode = obj.errorsObj[site].match(/statuscode.+?==.?(\d{3,4})/)[1];
+
+                                        if (!(errorCode.match(/\d{3,4}/).length)) {
+                                            throw 'invalid code';
+                                        }
+
+                                        column2Html = 'Error ' + errorCode;
+                                    } catch (err) {
+                                        column2Html = 'Error';
+                                    }
+
+                                    break;
+                                case 'excluded':
+                                    column2Html = 'Excluded';
+                                    break;
+                                default:
+                                    column2Html = 'Invalid';
+                                    console.log('%c Invalid obj.lastCheckedObj[site].status received.', 'background: #222; color: #bada55', 'obj.lastCheckedObj[site].status = ' + obj.lastCheckedObj[site].status);
+                                    obj.lastCheckedObj[site].status = 'other';
+                                    break;
+                            }
+                        }
+
+                        let column2 = $('tr#' + site + ' > .column2').eq(0);
+                        let column3 = $('tr#' + site + ' > .column3').eq(0);
+                        let column4 = $('tr#' + site + ' > .column4').eq(0);
+                        let auto = obj.autoSites.indexOf(site) > -1 ? 'YES' : 'NO';
+
+                        if (!(column2.html() == column2Html) || firstMessage) {
+                            column2.attr('class', 'column2 ' + obj.lastCheckedObj[site].status).html(column2Html);
+
+
+                            if (column2Html.toLowerCase().indexOf('error') > -1 && obj.errorsObj[site]) {
+                                console.log(site + ': ' + obj.errorsObj[site]);
+                                column2.attr('error', obj.errorsObj[site]);
+                            } else {
+                                column2.removeAttr('error');
+                            }
+                        }
+
+                        if (obj.lastCheckedObj[site].lastChecked) {
+                            let newText = obj.lastCheckedObj[site].lastChecked
+                                .replace(getDate() + ' ', '')
+                                .replace(getDate(-1), 'Yesterday at');
+
+                            if (column3.html() !== newText) {
+                                column3.html(newText);
+                            }
+                        }
+
+                        if (column4.html() !== auto) {
+                            column4.html(auto);
+                        }
+                    }
+                }
+
+                if (newestCheck == '2019-11-21 01:38:22') {
+                    newestCheck = 'None';
+                }
+
+
+                $('#footer').text(function (index, text) {
+                    return text
+                        .replace(/LAST CHECK: (.*?)\n/g, 'LAST CHECK: ' + newestCheck + '\n')
+                        .replace(/NEXT CHECK: (.*?)\n/g, 'NEXT CHECK: ' + obj.nextCheck + '\n')
+                        .replace(/STARTED: (.*?)\n/g, 'STARTED: ' + obj.startDateTime + '\n');
+                });
+
+                firstMessage = false;
+
+            } catch (err) {
+
+                throw err;
+            }
+
+            //console.log(data.data);
+        };
+
+        wss.onclose = function (e = {}) {
+
+
+            $('#updateButton').eq(0).removeClass('checking').html('Update');
+
+
+            $('tr > .column2').each(function () {
+
+                if ($(this).html() == '<div class="checking"></div>') {
+                    $(this).attr('class', 'column2 ' + 'error').html('Error')
+                }
+            });
+
+            if (isRestarting) {
+                reconnectTimeout = setTimeout(connect, 3500);
+                return;
+            }
+
+            clearInterval(countdownInterval);
+            clearTimeout(showErrorTimeout);
+
+            let txt = 'Connection to server lost. Retrying in ' + (errorCount > 0 ? (errorCount) * 10 : 5) + ' seconds';
+            console.log(txt, e.reason);
+
+
+            let secsRemaining = errorCount * 10;
+            if (errorCount > 0) {
+                countdownInterval = setInterval(function () {
+                    if (secsRemaining < 1) {
+                        return clearInterval(countdownInterval);
+                    }
+                    $('.erroralert').eq(0).show().html('Connection to server lost. Retrying in ' + --secsRemaining + ' seconds');
+                }, 1000);
+
+                $('.erroralert').eq(0).show().html(txt);
+            } else {
+                showErrorTimeout = setTimeout(function () {
+                    wss.close();
+                }, 5000);
+            }
+
+            clearTimeout(reconnectTimeout);
+
+            reconnectTimeout = setTimeout(connect, errorCount * 10000);
+
+            errorCount++
+        };
+
+        wss.onerror = function (err) {
+            console.error('Socket encountered an error: ', err, 'Closing socket');
+            wss.close();
+        };
+    };
+
+    connect();
+
+    $('#updateButton').click(function () {
+
+        if (!($(this).hasClass('checking')) && wss.readyState === WebSocket.OPEN) {
+            wss.send('update');
+        } else if (wss.readyState === WebSocket.CLOSED) {
+            clearTimeout(reconnectTimeout);
+
+            if (errorCount > 0) {
+                errorCount--;
+            }
+
+            connect();
+        }
+    });
+
+    $('#restartButton').click(function () {
+        if (!($(this).hasClass('restarting')) && wss.readyState === WebSocket.OPEN) {
+            wss.send('restart');
+        }
+    });
+
+    $(document).ready(function () {
+
+
+        /*var originalPageTitle = document.title;
+
+        window.addEventListener('blur', function(){
+            document.title = 'Don\'t forget to read this...';
+        });
+
+        window.addEventListener('focus', function(){
+            document.title = originalPageTitle;
+        });
+*/
+
+    });
+
+
+    function getDate(days = 0) {
+        var date = new Date();
+        date.setDate(date.getDate() + days);
+        var year = String(date.getFullYear());
+        var month = String(date.getMonth() + 1).padStart(2, '0');
+        var day = String(date.getDate()).padStart(2, '0');
+
+        return year + '-' + month + '-' + day;
+    }
+
+    function getDateTime(onlyTime, noSeconds, onlyDate) {
+        var date = new Date();
+        var hour = String(date.getHours()).padStart(2, '0');
+        var min = String(date.getMinutes()).padStart(2, '0');
+        var sec = String(date.getSeconds()).padStart(2, '0');
+        var year = String(date.getFullYear());
+        var month = String(date.getMonth() + 1).padStart(2, '0');
+        var day = String(date.getDate()).padStart(2, '0');
+
+        if (onlyDate) {
+            return year + month + day
+        }
+
+        return onlyTime ? (hour + ":" + min + (noSeconds ? "" : ":" + sec)) : (year + "-" + month + "-" + day + " " + hour + ":" + min + (noSeconds ? "" : ":" + sec));
+    }
+
+</script>
+</body>
+</html>
