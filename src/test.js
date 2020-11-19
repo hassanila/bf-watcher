@@ -243,6 +243,56 @@ queryArr.forEach(function (query) {
 */
 
 
+if (!comviqEmailSent) {
+    request({
+        pool: {maxSockets: 25},
+        uri: 'https://www.comviq.se/api/proxy/v1/shared/order_status/api/order/***REMOVED***/status',
+        method: "POST",
+        json: {
+            ssn: "***REMOVED***"
+        },
+        timeout: 15000,
+        headers: {
+            'User-Agent': config.chrome_ua,
+            Accept: 'application/json, text/plain, */*',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en,sv;q=0.9,it;q=0.8',
+            'X-Requested-With': 'XMLHttpRequest',
+            Origin: 'https://www.comviq.se',
+            Referer: 'https://www.comviq.se/leveransstatus/***REMOVED***'
+        },
+        followRedirect: true,
+        gzip: true,
+        strictSSL: false,
+        proxy: config.proxy,
+        maxRedirects: 10
+    }, function (err, res, body) {
+        if (err || res.statusCode != 200 || !body) {
+            throw err;
+        }
+
+
+        if (body.states[2].isActive) {
+            sendEmail({
+                from: '"BF Watcher" <***REMOVED***acc1@gmail.com>', // sender address
+                to: '***REMOVED******REMOVED******REMOVED***',
+                subject: 'Comviq Uppdatering ✔', // Subject line
+                text: 'Comviq Uppdatering: Packad', // html body
+            }, function (success, emailsArr) {
+
+                if (!success) {
+                    return console.log('COMVIQ EMAIL ERROR');
+                } else {
+                    comviqEmailSent = true;
+                }
+            });
+        }
+
+
+    });
+}
+
+
 
 
 

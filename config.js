@@ -2,15 +2,15 @@ var proxies = [
     null,
     'http://127.0.0.1:8888',
     'http://***REMOVED******REMOVED***97:***REMOVED******REMOVED******REMOVED***@***REMOVED***:8889',
-    'http://***REMOVED******REMOVED***.net:3292'
+    'http://***REMOVED******REMOVED***.com:3292'
 ];
 
 
 module.exports = {
 
     mysql: {
-        host: '***REMOVED******REMOVED***.net',
-        port: 3290, //3306
+        host: '***REMOVED******REMOVED***.com',
+        port: 3306, //3306
         user: '***REMOVED***',
         password: '***REMOVED***',
         database: 'bf-watcher',
@@ -27,39 +27,40 @@ module.exports = {
                     // max 25% av inkomsten
                     active: true,
                     password: '***REMOVED******REMOVED******REMOVED***',
-                    maxPrice: 6779,
-                    minRooms: 2,
-                    maxRooms: 4
+                    maxPrice: 12000,
+                    minRooms: 3,
+                    maxRooms: 5
                 },
                 vicpark: {
                     active: true,
                     password: '***REMOVED******REMOVED******REMOVED***',
-                    maxPrice: 10000,
-                    minRooms: 2
+                    maxPrice: 12000,
+                    minRooms: 3
                 },
                 akelius: {
                     // fix medsökande
                     active: true,
                     password: '***REMOVED******REMOVED******REMOVED***',
-                    maxPrice: 10000,
-                    minRooms: 2
+                    maxPrice: 12000,
+                    minRooms: 3
                 },
                 vasbyhem: {
                     active: true,
                     password: '***REMOVED******REMOVED******REMOVED***',
                     // 40%  av inkomsten max
-                    maxPrice: 9500,
-                    minRooms: 2
+                    maxPrice: 10000,
+                    minRooms: 3
                 },
                 sigtunahem: {
                     active: true,
                     password: '***REMOVED******REMOVED******REMOVED***',
                     // 40%  av inkomsten max
                     maxPrice: 10000,
-                    minRooms: 2
+                    minRooms: 3
                 }
             },
             check: true,
+            notify: false,
             types: ['normal', 'fast', 'sigtuna'],
             sitesToExclude: [
                 'wahlin:normal'
@@ -73,7 +74,7 @@ module.exports = {
                 hhem: {
                     active: true,
                     password: '***REMOVED***',
-                    maxPrice: 7000,
+                    maxPrice: 12000,
                     minRooms: 3
                 },
                 vicpark: {
@@ -104,6 +105,7 @@ module.exports = {
                 }
             },
             check: true,
+            notify: false,
             types: ['normal', 'fast', 'sigtuna'],
             sitesToExclude: [
                 'bf:normal',
@@ -118,6 +120,7 @@ module.exports = {
             pNummer: '***REMOVED***',
             auto: {},
             check: false,
+            notify: false,
             types: ['normal', 'fast', 'sigtuna'],
             sitesToExclude: [
                 'bf:normal',
@@ -130,13 +133,13 @@ module.exports = {
     ],
     roomsMaxPrices: {
         1: 4000,
-        2: 5500,
+        2: 6000,
         3: 10000,
         4: 12000,
         5: 13000,
         6: 13000
     },
-    sitesToExclude: [],
+    sitesToExclude: ['wahlin', 'akelius', 'bf'],
     locationsToExclude: {
         bf: [
             'Västerås',
@@ -190,8 +193,8 @@ module.exports = {
     },
     homepagesObj: {
         hhem: 'https://bostad.hasselbyhem.se/HSS/Object/object_list.aspx?objectgroup=1&action=Ava***REMOVED***ble',
-        vicpark: 'https://minasidor.victoriapark.se/ledigt/lagenhet?marketarea=AREA_777&selectedarea=STOCKHOLMORT',
-        heimstaden: 'https://mitt.heimstaden.com/HSS/Object/object_list.aspx?&objectgroup=1&marketarea=AREA_1345&selectedarea=V%C3%A4llingby',
+        vicpark: 'https://minasidor.victoriapark.se/ledigt/sok/objekt', //'https://minasidor.victoriapark.se/ledigt/lagenhet?marketarea=AREA_777&selectedarea=STOCKHOLMORT',
+        heimstaden: 'https://mitt.heimstaden.com/HSS/Object/object_list.aspx?objectgroup=1&marketarea=AREA_1345&selectedarea=V%C3%A4llingby',
         wahlin: 'https://wahlinfastigheter.se/lediga-objekt/lagenheter/',
         bf: 'https://bostad.stockholm.se/Lista/',
         jfhus: 'https://marknad.jarfallahus.se/',
