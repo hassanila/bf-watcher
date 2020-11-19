@@ -1,5 +1,5 @@
 process.env.UV_THREADPOOL_SIZE = 128;
-
+NODE_TLS_REJECT_UNAUTHORIZED=0;
 
 // If having problem with encoded response as unicode, use encoding: 'binary',
 
@@ -11,6 +11,7 @@ let config = require('../config.js'),
         retryDelay: 5000,
         proxy: config.proxy,
         strictSSL: false,
+        rejectUnauthorized: false,
         timeout: 30000,
         headers: {
             'User-Agent': config.chrome_ua
@@ -51,6 +52,12 @@ let config = require('../config.js'),
     sentErrors = [],
     startDateTime = getDateTime();
 
+let accountSid = '***REMOVED***';
+let authToken = '***REMOVED***';
+let twilio = require('twilio');
+let client = twilio(accountSid, authToken);
+let VoiceResponse = twilio.twiml.VoiceResponse;
+let bodyParser = require('body-parser');
 
 // 24hrs
 setInterval(() => {
@@ -364,17 +371,17 @@ let check = {
                 console.log(getDateTime() + '   NEW: ' + apartment.site + ': ' + apartment.id);
 
                 if (apartmentIsInvalid(apartment.id, apartment.price, apartment.rooms, apartment.area)) {
-                    if (apartment.price < 1000 || apartment.price > 20000) {
-                        console.log((getDateTime() + ' ' + apartment.site + ' ' + apartment.id + ' Price < 1000kr || Price > 20000kr   .price=' + String(apartment.price)).red);
-                        errorEmailArr.push(apartment.site + ' ' + apartment.id + ' Price < 1000kr || Price > 20000kr   .price=' + String(apartment.price));
+                    if (apartment.price < 1000 || apartment.price > 30000) {
+                        console.log((getDateTime() + ' ' + apartment.site + ' ' + apartment.id + ' Price < 1000kr || Price > 30000kr   .price=' + String(apartment.price)).red);
+                        errorEmailArr.push(apartment.site + ' <a href="' + apartment.url + '">' + apartment.id + '</a> Price < 1000kr || Price > 30000kr   .price=' + String(apartment.price));
                     }
                     if (apartment.rooms < 1 || apartment.rooms > 8) {
                         console.log((getDateTime() + ' ' + apartment.site + ' ' + apartment.id + ' Rooms < 1rum || Rooms > 8rum   .rooms=' + String(apartment.rooms)).red);
-                        errorEmailArr.push(apartment.site + ' ' + apartment.id + ' Rooms < 1rum || Rooms > 8rum   .rooms=' + String(apartment.rooms));
+                        errorEmailArr.push(apartment.site + ' <a href="' + apartment.url + '">' + apartment.id + '</a> Rooms < 1rum || Rooms > 8rum   .rooms=' + String(apartment.rooms));
                     }
                     if (apartment.area < 10 || apartment.area > 200) {
                         console.log((getDateTime() + ' ' + apartment.site + ' ' + apartment.id + ' Area < 10 || Area > 200   .area=' + String(apartment.area)).red);
-                        errorEmailArr.push(apartment.site + ' ' + apartment.id + ' Area < 10 || Area > 200   .area=' + String(apartment.area));
+                        errorEmailArr.push(apartment.site + ' <a href="' + apartment.url + '">' + apartment.id + '</a> Area < 10 || Area > 200   .area=' + String(apartment.area));
                     }
 
                     return false;
@@ -402,7 +409,7 @@ let check = {
             var userApartmentsObj = {};
 
             config.users.forEach(function (user, i) {
-                if (typeof user.email !== "undefined" && (user.email).length > 0) {
+                if (typeof user.email !== "undefined" && (user.email).length > 0 && user.notify) {
                     userApartmentsObj[user.email] = [];
                     newApartments.forEach(function (apartment) {
                         if (user.check && !(user.sitesToExclude.contains(apartment.site)) && !(user.sitesToExclude.contains(apartment.site + ':' + apartment.type)) && apartment.rooms > user.auto.hhem.minRooms - 1 && user.types.contains(apartment.type) && apartment.price < config.roomsMaxPrices[apartment.rooms] + 1) {
@@ -429,7 +436,7 @@ let check = {
                                 html += '<td class="column1"><a draggable="false" ' + (userApartments[index].type == "fast" || userApartments[index].type == "sigtuna" ? 'style="color:red; "' : ' ') + 'href="' + (userApartments[index].info.idUrl || userApartments[index].url) + '" target="_blank">' + userApartments[index].id + '</a></td>';
                                 html += '<td class="column2">' + userApartments[index].price + ':-</td>';
                                 html += '<td class="column3">' + userApartments[index].rooms + ' Rum</td>';
-                                html += '<td class="column4"><a draggable="false" target="_blank" href="' + (config.homepagesObj[userApartments[index].site] || 'https://www.google.com/search?q=' + userApartments[index].site) + '"><img draggable="false" alt="' + userApartments[index].site + '" src="img/png/small/' + userApartments[index].site + '.png"></a></td>';
+                                html += '<td class="column4"><a draggable="false" rel="noopener noreferrer" target="_blank" href="' + (config.homepagesObj[userApartments[index].site] || 'https://www.google.com/search?q=' + userApartments[index].site) + '"><img draggable="false" alt="' + userApartments[index].site + '" src="img/png/small/' + userApartments[index].site + '.png"></a></td>';
                                 html += '</tr>';
 
                             }
@@ -439,7 +446,7 @@ let check = {
                             editedEmailTemp = editedEmailTemp.replace('{TBODY}', html);
 
 
-                            var imgHost = 'https://***REMOVED******REMOVED***.net/bf-watcher/';
+                            var imgHost = 'https://***REMOVED******REMOVED***.com/bf-watcher/';
                             var regex = /<img.*?src="(.*?)".*?>|<link.*?href="(.*?)".*?>/g;
                             var imgUrlsArr = regex.matchAll(editedEmailTemp);
                             var attachmentsArr = [];
@@ -536,7 +543,8 @@ let check = {
         delete check.errorsObj[funcName];
 
         try {
-            request({
+
+                request({
                 uri: 'https://login001.stockholm.se/siteminderagent/forms/login.fcc',
                 method: "POST",
                 headers: {
@@ -794,7 +802,7 @@ let check = {
                     'Origin': 'https://bostad.hasselbyhem.se',
                     'Referer': 'https://bostad.hasselbyhem.se/HSS/Default.aspx',
                 },
-                jar: cookies,
+                jar: cookies
             }, function (err, res, body) {
 
                 if (err) {
@@ -881,7 +889,7 @@ let check = {
                                         'Origin': 'https://bostad.hasselbyhem.se',
                                     },
                                     followRedirect: false,
-                                    jar: cookies,
+                                    jar: cookies
 
                                 }, function (err, res, body) {
                                     if (err) {
@@ -904,7 +912,7 @@ let check = {
 
                                     var price = 0;
                                     try {
-                                        price = parseInt($('[id$="trCost"]').eq(0).text().replace(/\D/g, '') || $('[id$=Description]').eq(0).text().split('OBS')[1].replace(/\D/g, ''));
+                                        price = parseInt($('[id$="trCost"]').eq(0).text().replace(/\D/g, '') || $('[id$=Description]').eq(0).text().split('OBS')[1].split('kr')[0].replace(/\D/g, ''));
                                     } catch (e) {
 
                                         sendErrorEmail(funcName + '  ' + id + ': price invalid')
@@ -979,11 +987,11 @@ let check = {
                     }
 
                     request({
-                        uri: 'https://bostad.hasselbyhem.se/HSS/Object/object_list.aspx',
+                        uri: 'https://bostad.hasselbyhem.se/HSS/Object/object_list.aspx?objectgroup=1&action=Ava***REMOVED***ble',
                         method: "POST",
                         headers: {
                             'Origin': 'https://bostad.hasselbyhem.se',
-                            'Referer': 'https://bostad.hasselbyhem.se/HSS/Object/object_list.aspx',
+                            'Referer': 'https://bostad.hasselbyhem.se/HSS/Object/object_list.aspx?objectgroup=1&action=Ava***REMOVED***ble',
                         },
                         followAllRedirects: true,
                         jar: cookies,
@@ -1147,7 +1155,7 @@ let check = {
                                 return false;
                             }
 
-                            var url = 'https://mitt.heimstaden.com//' + apartments.eq(i).find('[id$="ObjectDetailsUrl"]').eq(0).attr('href').substring(6);
+                            var url = 'https://mitt.heimstaden.com/' + apartments.eq(i).find('[id$="ObjectDetailsUrl"]').eq(0).attr('href').substring(6);
                             var rooms = parseInt(apartments.eq(i).find('[id$="NoOfRooms"]').eq(0).text().replace(/\D/g, '')) || 0;
 
                             var apartmentinDb = check.dbAva***REMOVED***ble.some(function (dbApartment) {
@@ -1739,14 +1747,10 @@ let check = {
 
         try {
             request({
-                uri: 'https://minasidor.victoriapark.se/ledigt/sok/lagenhet',
+                uri: 'https://minasidor.victoriapark.se/ledigt/sok/objekt',
                 method: "GET",
                 followRedirect: false,
-                jar: cookies,
-                qs: {
-                    marketarea: 'AREA_777', // (Tensta)
-                    selectedarea: 'STOCKHOLMORT'
-                },
+                jar: cookies
             }, function (err, res, body) {
 
                 if (err) {
@@ -1770,10 +1774,12 @@ let check = {
                     return auto.error(funcName, 'eventvalidation||viewstate||... is invalid', mainCB);
                 }
 
-                var $ = cheerio.load(body);
 
-                var noOfPages = parseInt($('div.navbar [id$=_lblNoOfPages]').eq(0).text().replace(/\D/g, '')) || 1;
-                var bodysArr = [body];
+
+                var $;
+
+                var noOfPages = 1;
+                var bodysArr = [];
                 var functionList = [];
                 var noAdsOnPage = false;
 
@@ -1876,7 +1882,7 @@ let check = {
                     let index = 0;
 
                     if (noOfPages < 6 || pageNr < 4) {
-                        index = pageNr-1
+                        index = pageNr - 1
                     } else if (noOfPages - pageNr === 0) {
                         index = 4;
                     } else {
@@ -1884,16 +1890,80 @@ let check = {
                     }
 
 
+                   if (pageNr === 1) {
+                       request({
+                           uri: 'https://minasidor.victoriapark.se/ledigt/sok/objekt',
+                           method: "POST",
+                           headers: {
+                               'Referer': 'https://minasidor.victoriapark.se/ledigt/sok/objekt',
+                               'Origin': 'https://minasidor.victoriapark.se'
+                           },
+                           followAllRedirects: true,
+                           jar: cookies,
+                           form: {
+                               '__EVENTTARGET': '',
+                               '__EVENTARGUMENT': '',
+                               '__LASTFOCUS': '',
+                               '__VIEWSTATE': viewstate,
+                               '__VIEWSTATEGENERATOR': viewstategenerator,
+                               '__EVENTVALIDATION': eventvalidation,
+                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$rblObjectGroup': 1,
+                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$cblAreas$35': 'AREA_777',
+                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMinRooms': 'Min:',
+                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMaxRooms': 'Max:',
+                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMinFloor': 'Min:',
+                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMaxFloor': 'Max:',
+                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMinSize': 'Min:',
+                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMaxSize': 'Max:',
+                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$txtMaxCost': '',
+                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$btnSearch': 'Sök',
+                               'ctl00$ctl01$hdnBrowserCheck': '',
+                               'ctl00$ctl01$hdnRequestVerificationToken': ''
+                   },
+                   },
+
+                       function (err, res, body) {
+
+                           if (err) {
+                               return check.error(funcName, ' err: ' + err.code + (typeof res !== "undefined" ? 'statuscode = ' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode] : ''), mainCB);
+                           } else if (res.statusCode != 200) {
+                               let errorText = 'statuscode != 200 ==' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode];
+                               if (isRedirect(res.statusCode)) {
+                                   sendErrorEmail(funcName + ' \n' + errorText);
+                               }
+                               writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
+                               return check.error(funcName, errorText, mainCB);
+                           } else if (res.request._redirect.redirects.length > 1) {
+                               writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
+                               return check.error(funcName, ' redirects Length > 1 ==' + res.request._redirect.redirects.length, mainCB);
+                           }
+
+                               eventvalidation = extractBetweenStrings(body, 'EVENTVALIDATION" value="', '" />')[0];
+                           viewstate = extractBetweenStrings(body, 'VIEWSTATE" value="', '" />')[0];
+                           viewstategenerator = extractBetweenStrings(body, 'VIEWSTATEGENERATOR" value="', '" />')[0];
+
+                           if (!(eventvalidation && viewstate && viewstategenerator)) {
+                               return auto.error(funcName, 'eventvalidation||viewstate||... is invalid', mainCB);
+                           }
+
+                               $ = cheerio.load(body)
+                           bodysArr.push(body);
+                               noOfPages = parseInt($('div.navbar [id$=_lblNoOfPages]').eq(0).text().replace(/\D/g, '')) || 1
+
+
+                           return cb();
+                       }
+
+                   )
+                   } else
+                       {
+
                     request({
                         uri: 'https://minasidor.victoriapark.se/ledigt/sok/lagenhet',
                         method: "POST",
                         headers: {
                             'Referer': 'https://minasidor.victoriapark.se/ledigt/sok/lagenhet',
                             'Origin': 'https://minasidor.victoriapark.se',
-                        },
-                        qs: {
-                            marketarea: 'AREA_777', //(Tensta)
-                            selectedarea: 'STOCKHOLMORT'
                         },
                         followAllRedirects: true,
                         jar: cookies,
@@ -1908,8 +1978,10 @@ let check = {
                             'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$cblAreas$28': 'AREA_725',
                             'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$cblAreas$29': 'AREA_776',*/
                             'ctl00$ctl01$hdnRequestVerificationToken': ''
-                        },
-                    }, function (err, res, body) {
+                },
+                },
+
+                    function (err, res, body) {
 
                         if (err) {
                             return check.error(funcName, ' err: ' + err.code + (typeof res !== "undefined" ? 'statuscode = ' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode] : ''), mainCB);
@@ -1948,25 +2020,27 @@ let check = {
                         }
 
                         return cb();
-                    })
+                    }
+
+                )
+                }
                 };
 
+                getPage(1, function() {
+                   /* for (let i = 1; i < noOfPages; i++) {
+                        functionList.push(function (cb) {
+                            getPage((i + 1), cb);
+                        })
+                    } */
 
-                for (let i = 1; i < noOfPages; i++) {
-                    functionList.push(function (cb) {
-                        getPage((i + 1), cb);
-                    })
-                }
-
-
-                async.series(functionList, function () {
-                    processPages(bodysArr, function () {
-                        if (!(check.errorsObj.hasOwnProperty(funcName))) {
-                            return check.done(mainCB, funcName, localApartments);
-                        }
+                    async.series(functionList, function () {
+                        processPages(bodysArr, function () {
+                            if (!(check.errorsObj.hasOwnProperty(funcName))) {
+                                return check.done(mainCB, funcName, localApartments);
+                            }
+                        });
                     });
                 });
-
 
             });
         } catch (err) {
@@ -2110,83 +2184,125 @@ let check = {
 
         delete check.errorsObj[funcName];
 
+        let postObj = {
+            Parm1: {"CompanyNo":0,"SyndicateNo":1,"ObjectMainGroupNo":1,"MarketPlaces":[{"No":101},{"No":100}],"Advertisements":[{"No":0}],"RentLimit":{"Min":0,"Max":15000},"AreaLimit":{"Min":0,"Max":200},"ApplySearchFilter":true,"Page":1,"Take":10,"SortOrder":"SeekAreaDescription ASC, StreetName ASC","ReturnParameters":["ObjectNo","FirstEstateImageUrl","Street","SeekAreaDescription","PlaceName","ObjectSubDescription","ObjectArea","RentPerMonth","MarketPlaceDescription","CountInterest","FirstInfoTextShort","FirstInfoText","EndPeriodMP","FreeFrom","SeekAreaUrl","Latitude","Longitude","BoardNo"]},
+            CallbackMethod: "PostObjectSearch",
+            CallbackParmCount: 1,
+            __WWEVENTCALLBACK: ''
+        };
+        let postData = `Parm1=${encodeURIComponent(JSON.stringify(postObj.Parm1).replace(/\s/g, '+'))}&CallbackMethod=${encodeURIComponent(postObj.CallbackMethod)}&CallbackParmCount=${encodeURIComponent(postObj.CallbackParmCount)}&__WWEVENTCALLBACK=`.replace(/\s/g, '').replace(/%2B/g, '+');
+        let postUrl = 'https://marknad.upplands-brohus.se/API/Service/SearchServiceHandler.ashx';
+
         try {
 
-            let getApiKey = function (cb) {
+            let getAuthorization = function (cb) {
+
 
                 request({
-                    uri: 'https://marknad.upplands-brohus.se',
+                    uri: 'https://marknad.upplands-brohus.se/scripts/momentum/momentum.services.js',
                     method: "GET",
+                    headers: {
+                        Origin: "https://marknad.upplands-brohus.se",
+                        Referer: "https://marknad.upplands-brohus.se/pgSearchResult.aspx"
+                    },
                     jar: cookies
                 }, function (err, res, body) {
 
                     if (err) {
-                        return check.error(funcName, 'err: ' + err.code + (typeof res !== "undefined" ? 'statuscode = ' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode] : ''), mainCB);
+                        return check.error(funcName, ' JS err: ' + err.code + (typeof res !== "undefined" ? 'statuscode = ' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode] : ''), mainCB);
                     } else if (res.statusCode != 200) {
-                        let errorText = 'statuscode != 200 ==' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode];
+                        let errorText = 'JS statuscode != 200 ==' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode];
                         if (isRedirect(res.statusCode)) {
                             sendErrorEmail(funcName + ' \n' + errorText);
                         }
                         writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
                         return check.error(funcName, errorText, mainCB);
                     } else if (!body) {
-                        return check.error(funcName, 'body is empty', mainCB);
+                        return check.error(funcName, ' JS body is empty', mainCB);
                     }
 
 
-                    let apiKey;
-                    let oldApiKey = '+FTolII7sNynUJWMso0zjawKmDHLnzZ9YWZwzupbOyE=';
+                    let apiKey, secret;
 
                     try {
 
-                        apiKey = extractBetweenStrings(body, ',"apiKey":"', '",')[0] || 0;
+                        let arr = extractBetweenStrings(body, 'momentum.generateApiToken(', ')')[0].split(',').slice(0, 2);
 
-                        if (apiKey.length < 10 || !(isBase64(apiKey))) {
-                            console.log((funcName + ': apiKey is invalid  ==' + apiKey).red);
-                            throw 'apiKey is invalid';
+                        apiKey = arr[0].trim().slice(1, -1);
+                        secret = arr[1].trim().slice(1, -1);
+
+                        if (apiKey.length < 10 || secret.length < 10 || !(isBase64(secret))) {
+                            console.log((funcName + ': apiKey or secret is invalid').red);
+                            throw 'apiKey or secret is invalid';
                         }
-
-                        if (apiKey != oldApiKey) {
-                            if (sendErrorEmail(funcName + ': APIKEY has changed!')) {
-                                console.log((funcName + ': APIKEY has changed!').red);
-                                console.log(('OLD APIKEY: ' + oldApiKey).red);
-                                console.log(('NEW APIKEY: ' + apiKey).red);
-                            }
-                        }
-
 
                     } catch (e) {
-                        writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
-                        sendErrorEmail(funcName + ': error when parsing API key from homepage');
-                        return check.error(funcName, 'error when parsing API key from homepage', mainCB);
+                        writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.js`), body, (new URL(res.request.uri.href)).origin);
+                        sendErrorEmail(funcName + ': error when parsing API key from JS file');
+                        return check.error(funcName, 'error when parsing API key from JS file', mainCB);
                     }
 
 
-                    cb(apiKey);
+                    let a = function () {
+                        var c = '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, function (a) {
+                            return (a ^ getRandomValues(new Uint8Array(1))[0] & 15 >> a / 4).toString(16)
+                        });
+                        return c.replace(/-/gm, '')
+                    };
+
+                    let generateApiToken = function (c, d, e, f, g) {
+
+                        let i = encodeURIComponent(e).toLowerCase()
+                            , j = g ? CryptoJS.enc.Base64.stringify(CryptoJS.MD5(g)) : ''
+                            , l = a(!0)
+                            , k = Math.floor(new Date().getTime() / 1e3)
+                            , m = [c, f, i, k, l, j].join('')
+                            , n = CryptoJS.enc.Base64.parse(d)
+                            , o = CryptoJS.enc.Utf8.parse(m)
+                            , p = CryptoJS.HmacSHA256(o, n)
+                            , q = CryptoJS.enc.Base64.stringify(p);
+
+                        return [c, q, l, k].join(':');
+                    };
 
 
-                })
+                    // 2019-11-14
+                    let oldApiKey = '***REMOVED***';
+                    let oldSecret = '***REMOVED***';
+
+
+                    if (apiKey != oldApiKey || secret != oldSecret) {
+                        if (sendErrorEmail(funcName + ': APIKEY or SECRET has changed!')) {
+                            console.log((funcName + ': APIKEY or SECRET has changed!').red);
+                            console.log(('OLD APIKEY: ' + oldApiKey).red);
+                            console.log(('OLD SECRET: ' + oldSecret).red);
+                            console.log(('NEW APIKEY: ' + apiKey).red);
+                            console.log(('NEW SECRET: ' + secret).red);
+                        }
+                    }
+
+
+                    let s = generateApiToken(apiKey, secret, postUrl, 'POST', postData);
+
+
+                    return cb('MOM-API apitoken="' + s + '"');
+                });
             };
 
-            getApiKey(function (apiKey) {
+            getAuthorization(function (authorization) {
+
                 request({
-                    uri: 'https://marknad.upplands-brohus.se/API/Service/SearchServiceHandler.ashx',
+                    uri: postUrl,
                     method: "POST",
                     headers: {
-                        Origin: "https://marknad.upplands-brohus.se",
-                        Referer: "https://marknad.upplands-brohus.se/?mg=1",
-                        "X-Momentum-API-KEY": apiKey,
+                        Authorization: authorization,
                         "X-Requested-With": "XMLHttpRequest",
-                        Accept: "*/*",
-                        'Accept-Language': '*'
+                        Accept: 'application/json,text/*',
+                        Referer: 'https://marknad.upplands-brohus.se/?mg=1',
+                        'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    form: {
-                        Parm1: '{"CompanyNo":-1,"SyndicateNo":1,"ObjectMainGroupNo":1,"MarketPlaces":[{"No":101},{"No":100}],"Advertisements":[{"No":0}],"RentLimit":{"Min":0,"Max":15000},"AreaLimit":{"Min":0,"Max":200},"ApplySearchFilter":true,"Page":1,"Take":10,"SortOrder":"SeekAreaDescription asc, StreetName asc","ReturnParameters":["ObjectNo","FirstEstateImageUrl","Street","SeekAreaDescription","PlaceName","ObjectSubDescription","ObjectArea","RentPerMonth","MarketPlaceDescription","CountInterest","FirstInfoTextShort","FirstInfoText","EndPeriodMP","FreeFrom","SeekAreaUrl","Latitude","Longitude","BoardNo"]}',
-                        CallbackMethod: "PostObjectSearch",
-                        CallbackParmCount: 1,
-                        __WWEVENTCALLBACK: ''
-                    },
-                    jar: cookies,
+                    body: postData,
+                    jar: cookies
                 }, function (err, res, body) {
 
                     if (err) {
@@ -2559,6 +2675,248 @@ let check = {
 
 
     },
+    jfhus: function (cb) {
+        var funcName = arguments.callee.name;
+        var mainCB = cb;
+        var localApartments = [];
+        var cookies = request.jar();
+        var dateTimeCache = getDateTime();
+        check.lastCheckedObj[funcName] = check.lastCheckedObj[funcName] || {};
+        check.lastCheckedObj[funcName]['lastChecked'] = dateTimeCache;
+        check.lastCheckedObj[funcName]['status'] = 'checking';
+
+        // Only Ungdom
+
+
+        delete check.errorsObj[funcName];
+
+        let postObj = {
+            Parm1: {
+                "CompanyNo": -1,
+                "SyndicateNo": 1,
+                "ObjectMainGroupNo": 4,
+                "Advertisements": [
+                    {
+                        "No": -1
+                    }
+                ],
+                "RentLimit": {
+                    "Min": 0,
+                    "Max": 15000
+                },
+                "AreaLimit": {
+                    "Min": 0,
+                    "Max": 150
+                },
+                "ApplySearchFilter": true,
+                "Page": 1,
+                "Take": 10,
+                "SortOrder": "FreeFrom asc, SeekAreaDescription asc, StreetName asc",
+                "ReturnParameters": [
+                    "ObjectNo",
+                    "FirstEstateImageUrl",
+                    "Street",
+                    "SeekAreaDescription",
+                    "PlaceName",
+                    "ObjectSubDescription",
+                    "ObjectArea",
+                    "RentPerMonth",
+                    "MarketPlaceDescription",
+                    "CountInterest",
+                    "FirstInfoTextShort",
+                    "FirstInfoText",
+                    "EndPeriodMP",
+                    "FreeFrom",
+                    "SeekAreaUrl",
+                    "Latitude",
+                    "Longitude",
+                    "BoardNo"
+                ]
+            },
+            CallbackMethod: "PostObjectSearch",
+            CallbackParmCount: 1,
+            __WWEVENTCALLBACK: ''
+        };
+        let postData = `Parm1=${encodeURIComponent(JSON.stringify(postObj.Parm1).replace(/\s/g, '+'))}&CallbackMethod=${encodeURIComponent(postObj.CallbackMethod)}&CallbackParmCount=${encodeURIComponent(postObj.CallbackParmCount)}&__WWEVENTCALLBACK=`.replace(/\s/g, '').replace(/%2B/g, '+');
+        let postUrl = 'https://marknad.jarfallahus.se/API/Service/SearchServiceHandler.ashx';
+
+        try {
+
+            let getAuthorization = function (cb) {
+
+                request({
+                    uri: 'https://marknad.jarfallahus.se/scripts/momentum/momentum.services.js',
+                    method: "GET",
+                    headers: {
+                        Origin: "https://marknad.jarfallahus.se",
+                        Referer: "https://marknad.jarfallahus.se/pgSearchResult.aspx"
+                    },
+                    jar: cookies
+                }, function (err, res, body) {
+
+                    if (err) {
+                        return check.error(funcName, ' JS err: ' + err.code + (typeof res !== "undefined" ? 'statuscode = ' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode] : ''), mainCB);
+                    } else if (res.statusCode != 200) {
+                        let errorText = 'JS statuscode != 200 ==' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode];
+                        if (isRedirect(res.statusCode)) {
+                            sendErrorEmail(funcName + ' \n' + errorText);
+                        }
+                        writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
+                        return check.error(funcName, errorText, mainCB);
+                    } else if (!body) {
+                        return check.error(funcName, ' JS body is empty', mainCB);
+                    }
+
+
+                    let apiKey, secret;
+
+                    try {
+
+                        let arr = extractBetweenStrings(body, 'momentum.generateApiToken(', ')')[0].split(',').slice(0, 2);
+
+                        apiKey = arr[0].trim().slice(1, -1);
+                        secret = arr[1].trim().slice(1, -1);
+
+                        if (apiKey.length < 10 || secret.length < 10 || !(isBase64(secret))) {
+                            console.log((funcName + ': apiKey or secret is invalid').red);
+                            throw 'apiKey or secret is invalid';
+                        }
+
+                    } catch (e) {
+                        writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.js`), body, (new URL(res.request.uri.href)).origin);
+                        sendErrorEmail(funcName + ': error when parsing API key from JS file');
+                        return check.error(funcName, 'error when parsing API key from JS file', mainCB);
+                    }
+
+
+                    let a = function () {
+                        var c = '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, function (a) {
+                            return (a ^ getRandomValues(new Uint8Array(1))[0] & 15 >> a / 4).toString(16)
+                        });
+                        return c.replace(/-/gm, '')
+                    };
+
+                    let generateApiToken = function (c, d, e, f, g) {
+
+                        let i = encodeURIComponent(e).toLowerCase()
+                            , j = g ? CryptoJS.enc.Base64.stringify(CryptoJS.MD5(g)) : ''
+                            , l = a(!0)
+                            , k = Math.floor(new Date().getTime() / 1e3)
+                            , m = [c, f, i, k, l, j].join('')
+                            , n = CryptoJS.enc.Base64.parse(d)
+                            , o = CryptoJS.enc.Utf8.parse(m)
+                            , p = CryptoJS.HmacSHA256(o, n)
+                            , q = CryptoJS.enc.Base64.stringify(p);
+
+                        return [c, q, l, k].join(':');
+                    };
+
+
+                    // 2019-11-14
+                    let oldApiKey = '***REMOVED***';
+                    let oldSecret = '***REMOVED***';
+
+
+                    if (apiKey != oldApiKey || secret != oldSecret) {
+                        if (sendErrorEmail(funcName + ': APIKEY or SECRET has changed!')) {
+                            console.log((funcName + ': APIKEY or SECRET has changed!').red);
+                            console.log(('OLD APIKEY: ' + oldApiKey).red);
+                            console.log(('OLD SECRET: ' + oldSecret).red);
+                            console.log(('NEW APIKEY: ' + apiKey).red);
+                            console.log(('NEW SECRET: ' + secret).red);
+                        }
+                    }
+
+
+                    let s = generateApiToken(apiKey, secret, postUrl, 'POST', postData);
+
+
+                    return cb('MOM-API apitoken="' + s + '"');
+                });
+            };
+
+            getAuthorization(function (authorization) {
+
+                //console.log('Authorization: ' + authorization);
+
+                request({
+                    uri: postUrl,
+                    method: "POST",
+                    headers: {
+                        Authorization: authorization,
+                        "X-Requested-With": "XMLHttpRequest",
+                        Accept: 'application/json,text/*',
+                        Referer: 'https://marknad.jarfallahus.se/pgSearchResult.aspx?mg=4',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: postData,
+                    jar: cookies
+                }, function (err, res, body) {
+
+                    if (err) {
+                        return check.error(funcName, ' err: ' + err.code + (typeof res !== "undefined" ? 'statuscode = ' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode] : ''), mainCB);
+                    } else if (res.statusCode != 200) {
+                        let errorText = 'statuscode != 200 ==' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode];
+                        if (isRedirect(res.statusCode)) {
+                            sendErrorEmail(funcName + ' \n' + errorText);
+                        }
+                        writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
+                        return check.error(funcName, errorText, mainCB);
+                    } else if (!body) {
+                        return check.error(funcName, ' body is empty', mainCB);
+                    }
+
+                    try {
+                        var apartments = JSON.parse(body)['Result'];
+                    } catch (e) {
+                        writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
+                        return check.error(funcName, ' couldn\'t parse JSON', mainCB);
+                    }
+
+                    if (!apartments.length) {
+                        return check.done(mainCB, funcName, localApartments);
+                    }
+
+                    apartments.forEach(function (apartment, i) {
+
+                        let id = apartment['ObjectNo'];
+                        let rooms = parseInt(apartment['ObjectSubDescription'].replace(/\D/g, '')) || 0;
+                        let price = parseInt(apartment['RentPerMonth'].replace(/\D/g, '')) || 0;
+                        let area = apartment['ObjectAreaSort'];
+
+
+                        if (apartmentIsInvalid(id, price, rooms, area)) {
+                            console.log(`Invalid ${funcName} apartment with ID: ${id}`.red);
+                            writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
+                        }
+
+                        localApartments.push({
+                            id: id,
+                            site: funcName,
+                            rooms: rooms,
+                            price: price,
+                            area: area,
+                            url: 'https://marknad.jarfallahus.se/pgObjectInformation.aspx?company=1&obj=' + apartment['ObjectNo'],
+                            added: dateTimeCache,
+                            type: 'normal',
+                            info: {}
+                        });
+
+                        if (i == apartments.length - 1) {
+                            return check.done(mainCB, funcName, localApartments);
+                        }
+                    });
+                });
+
+            });
+        } catch (err) {
+
+            let errorText = String('\ncatched err: ' + err.stack);
+            sendErrorEmail(funcName + ' \n' + errorText);
+            return check.error(funcName, errorText, mainCB);
+        }
+
+    },
     akelius: function (cb) {
         var funcName = arguments.callee.name;
         var mainCB = cb;
@@ -2592,7 +2950,8 @@ let check = {
             'Årsta',
             'Älvsjö',
             'Bandhagen',
-            'Stockholm'
+            'Stockholm',
+            'Johanneshov'
         ];
 
         try {
@@ -2629,7 +2988,7 @@ let check = {
                 var cities = (ads.map(ad => ad.address.city || ad.address.area)).removeDuplicates();
                 cities.forEach(city => {
 
-                    if (!(config.locationsToExclude[funcName].contains(city) || locationsToInclude.contains(capitalizeFirstLetter(city)) || emailSentNewLocations.contains(city)) && city.trim() !== '') {
+                    if (!(config.locationsToExclude[funcName].contains(capitalizeFirstLetter(city)) || locationsToInclude.contains(capitalizeFirstLetter(city)) || emailSentNewLocations.contains(city)) && city.trim() !== '') {
                         console.log((getDateTime() + ' NEW AKELIUS LOCATION: ' + city).red);
                         emailSentNewLocations.push(city);
 
@@ -2653,7 +3012,10 @@ let check = {
                 });
 
 
-                ads = ads.filter(ad => locationsToInclude.contains(capitalizeFirstLetter(ad.address.city)));
+                ads = ads.filter(function (ad) {
+                    ad.address.city = ad.address.city || ad.address.area;
+                    return locationsToInclude.contains(capitalizeFirstLetter(ad.address.city));
+                });
 
                 if (!(ads.length)) {
                     return check.done(mainCB, funcName, localApartments);
@@ -2662,11 +3024,12 @@ let check = {
 
                 ads.forEach(function (ad, i) {
                     var id = ad['id'];
-                    var rooms = parseInt(ad['details']["numberOfRooms"], 10) || 0;
+                    //var rooms = parseInt(ad['details']["numberOfRooms"], 10) || 0;
+                    var rooms = parseInt(ad['keyfacts']["number-of-rooms"], 10) || 0;
 
                     var apartmentinDb = check.dbAva***REMOVED***ble.some(function (dbApartment) {
                         if (dbApartment.id == id && dbApartment.price > 0) {
-                            dbApartment.address = ad['address']['streetName'].trim();
+                            dbApartment.address = ad['keyfacts']['streetname'].trim();
                             localApartments.push(dbApartment);
                             return true;
                         }
@@ -2674,7 +3037,7 @@ let check = {
                     });
 
 
-                    var areaSplit = String(ad['details']["size"]).split('.');
+                    var areaSplit = String(ad['keyfacts']["unit-size"]).split('.');
                     var area;
                     if (areaSplit.length == 2) {
                         area = Math.round(parseFloat(areaSplit[0].replace(/\D/g, '') + "." + areaSplit[1].replace(/\D/g, '') || 0));
@@ -2682,7 +3045,7 @@ let check = {
                         area = parseInt(areaSplit[0].replace(/\D/g, '')) || 0;
                     }
 
-                    var priceSplit = String(ad['details']['rent']['totalRent']).split('.');
+                    var priceSplit = String(ad['keyfacts']['total-rent']).split('.');
                     var price;
                     if (priceSplit.length == 2) {
                         price = Math.round(parseFloat(priceSplit[0].replace(/\D/g, '') + "." + priceSplit[1].replace(/\D/g, '') || 0));
@@ -2705,7 +3068,7 @@ let check = {
                             area: area,
                             url: 'https://rent.akelius.com/sv/detail/' + id,
                             added: dateTimeCache,
-                            address: ad['address']['streetName'].trim(),
+                            address: ad['keyfacts']['streetname'].trim(),
                             type: 'normal',
                             info: {internalId: ad['internalId']}
                         });
@@ -3014,248 +3377,6 @@ let check = {
             sendErrorEmail(funcName + ' \n' + errorText);
             return check.error(funcName, errorText, mainCB);
         }
-    },
-    jfhus: function (cb) {
-        var funcName = arguments.callee.name;
-        var mainCB = cb;
-        var localApartments = [];
-        var cookies = request.jar();
-        var dateTimeCache = getDateTime();
-        check.lastCheckedObj[funcName] = check.lastCheckedObj[funcName] || {};
-        check.lastCheckedObj[funcName]['lastChecked'] = dateTimeCache;
-        check.lastCheckedObj[funcName]['status'] = 'checking';
-
-        // Only Ungdom
-
-
-        delete check.errorsObj[funcName];
-
-        let postObj = {
-            Parm1: {
-                "CompanyNo": -1,
-                "SyndicateNo": 1,
-                "ObjectMainGroupNo": 4,
-                "Advertisements": [
-                    {
-                        "No": -1
-                    }
-                ],
-                "RentLimit": {
-                    "Min": 0,
-                    "Max": 15000
-                },
-                "AreaLimit": {
-                    "Min": 0,
-                    "Max": 150
-                },
-                "ApplySearchFilter": true,
-                "Page": 1,
-                "Take": 10,
-                "SortOrder": "FreeFrom asc, SeekAreaDescription asc, StreetName asc",
-                "ReturnParameters": [
-                    "ObjectNo",
-                    "FirstEstateImageUrl",
-                    "Street",
-                    "SeekAreaDescription",
-                    "PlaceName",
-                    "ObjectSubDescription",
-                    "ObjectArea",
-                    "RentPerMonth",
-                    "MarketPlaceDescription",
-                    "CountInterest",
-                    "FirstInfoTextShort",
-                    "FirstInfoText",
-                    "EndPeriodMP",
-                    "FreeFrom",
-                    "SeekAreaUrl",
-                    "Latitude",
-                    "Longitude",
-                    "BoardNo"
-                ]
-            },
-            CallbackMethod: "PostObjectSearch",
-            CallbackParmCount: 1,
-            __WWEVENTCALLBACK: ''
-        };
-        let postData = `Parm1=${encodeURIComponent(JSON.stringify(postObj.Parm1).replace(/\s/g, '+'))}&CallbackMethod=${encodeURIComponent(postObj.CallbackMethod)}&CallbackParmCount=${encodeURIComponent(postObj.CallbackParmCount)}&__WWEVENTCALLBACK=`.replace(/\s/g, '').replace(/%2B/g, '+');
-        let postUrl = 'https://marknad.jarfallahus.se/API/Service/SearchServiceHandler.ashx';
-
-        try {
-
-            let getAuthorization = function (cb) {
-
-                request({
-                    uri: 'https://marknad.jarfallahus.se/scripts/momentum/momentum.services.js',
-                    method: "GET",
-                    headers: {
-                        Origin: "https://marknad.jarfallahus.se",
-                        Referer: "https://marknad.jarfallahus.se/pgSearchResult.aspx"
-                    },
-                    jar: cookies
-                }, function (err, res, body) {
-
-                    if (err) {
-                        return check.error(funcName, ' JS err: ' + err.code + (typeof res !== "undefined" ? 'statuscode = ' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode] : ''), mainCB);
-                    } else if (res.statusCode != 200) {
-                        let errorText = 'JS statuscode != 200 ==' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode];
-                        if (isRedirect(res.statusCode)) {
-                            sendErrorEmail(funcName + ' \n' + errorText);
-                        }
-                        writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
-                        return check.error(funcName, errorText, mainCB);
-                    } else if (!body) {
-                        return check.error(funcName, ' JS body is empty', mainCB);
-                    }
-
-
-                    let apiKey, secret;
-
-                    try {
-
-                        let arr = extractBetweenStrings(body, 'momentum.generateApiToken(', ')')[0].split(',').slice(0, 2);
-
-                        apiKey = arr[0].trim().slice(1, -1);
-                        secret = arr[1].trim().slice(1, -1);
-
-                        if (apiKey.length < 10 || secret.length < 10 || !(isBase64(secret))) {
-                            console.log((funcName + ': apiKey or secret is invalid').red);
-                            throw 'apiKey or secret is invalid';
-                        }
-
-                    } catch (e) {
-                        writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.js`), body, (new URL(res.request.uri.href)).origin);
-                        sendErrorEmail(funcName + ': error when parsing API key from JS file');
-                        return check.error(funcName, 'error when parsing API key from JS file', mainCB);
-                    }
-
-
-                    let a = function () {
-                        var c = '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, function (a) {
-                            return (a ^ getRandomValues(new Uint8Array(1))[0] & 15 >> a / 4).toString(16)
-                        });
-                        return c.replace(/-/gm, '')
-                    };
-
-                    let generateApiToken = function (c, d, e, f, g) {
-
-                        let i = encodeURIComponent(e).toLowerCase()
-                            , j = g ? CryptoJS.enc.Base64.stringify(CryptoJS.MD5(g)) : ''
-                            , l = a(!0)
-                            , k = Math.floor(new Date().getTime() / 1e3)
-                            , m = [c, f, i, k, l, j].join('')
-                            , n = CryptoJS.enc.Base64.parse(d)
-                            , o = CryptoJS.enc.Utf8.parse(m)
-                            , p = CryptoJS.HmacSHA256(o, n)
-                            , q = CryptoJS.enc.Base64.stringify(p);
-
-                        return [c, q, l, k].join(':');
-                    };
-
-
-                    // 2019-11-14
-                    let oldApiKey = '***REMOVED***';
-                    let oldSecret = '***REMOVED***';
-
-
-                    if (apiKey != oldApiKey || secret != oldSecret) {
-                        if (sendErrorEmail(funcName + ': APIKEY or SECRET has changed!')) {
-                            console.log((funcName + ': APIKEY or SECRET has changed!').red);
-                            console.log(('OLD APIKEY: ' + oldApiKey).red);
-                            console.log(('OLD SECRET: ' + oldSecret).red);
-                            console.log(('NEW APIKEY: ' + apiKey).red);
-                            console.log(('NEW SECRET: ' + secret).red);
-                        }
-                    }
-
-
-                    let s = generateApiToken(apiKey, secret, postUrl, 'POST', postData);
-
-
-                    return cb('MOM-API apitoken="' + s + '"');
-                });
-            };
-
-            getAuthorization(function (authorization) {
-
-                //console.log('Authorization: ' + authorization);
-
-                request({
-                    uri: postUrl,
-                    method: "POST",
-                    headers: {
-                        Authorization: authorization,
-                        "X-Requested-With": "XMLHttpRequest",
-                        Accept: 'application/json,text/*',
-                        Referer: 'https://marknad.jarfallahus.se/pgSearchResult.aspx?mg=4',
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: postData,
-                    jar: cookies
-                }, function (err, res, body) {
-
-                    if (err) {
-                        return check.error(funcName, ' err: ' + err.code + (typeof res !== "undefined" ? 'statuscode = ' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode] : ''), mainCB);
-                    } else if (res.statusCode != 200) {
-                        let errorText = 'statuscode != 200 ==' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode];
-                        if (isRedirect(res.statusCode)) {
-                            sendErrorEmail(funcName + ' \n' + errorText);
-                        }
-                        writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
-                        return check.error(funcName, errorText, mainCB);
-                    } else if (!body) {
-                        return check.error(funcName, ' body is empty', mainCB);
-                    }
-
-                    try {
-                        var apartments = JSON.parse(body)['Result'];
-                    } catch (e) {
-                        writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
-                        return check.error(funcName, ' couldn\'t parse JSON', mainCB);
-                    }
-
-                    if (!apartments.length) {
-                        return check.done(mainCB, funcName, localApartments);
-                    }
-
-                    apartments.forEach(function (apartment, i) {
-
-                        let id = apartment['ObjectNo'];
-                        let rooms = parseInt(apartment['ObjectSubDescription'].replace(/\D/g, '')) || 0;
-                        let price = parseInt(apartment['RentPerMonth'].replace(/\D/g, '')) || 0;
-                        let area = apartment['ObjectAreaSort'];
-
-
-                        if (apartmentIsInvalid(id, price, rooms, area)) {
-                            console.log(`Invalid ${funcName} apartment with ID: ${id}`.red);
-                            writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
-                        }
-
-                        localApartments.push({
-                            id: id,
-                            site: funcName,
-                            rooms: rooms,
-                            price: price,
-                            area: area,
-                            url: 'https://marknad.jarfallahus.se/pgObjectInformation.aspx?company=1&obj=' + apartment['ObjectNo'],
-                            added: dateTimeCache,
-                            type: 'normal',
-                            info: {}
-                        });
-
-                        if (i == apartments.length - 1) {
-                            return check.done(mainCB, funcName, localApartments);
-                        }
-                    });
-                });
-
-            });
-        } catch (err) {
-
-            let errorText = String('\ncatched err: ' + err.stack);
-            sendErrorEmail(funcName + ' \n' + errorText);
-            return check.error(funcName, errorText, mainCB);
-        }
-
     },
     sollentunahem: function (cb) {
         var funcName = arguments.callee.name;
@@ -6742,11 +6863,11 @@ let auto = {
 
 
                                 request({
-                                    uri: 'https://prod.akelius.se/IncitXpandWeb07038_1/Internet/Bk/InterestReport.aspx',
+                                    uri: 'https://xpdapi.akelius.se/IncitXpandWeb07038_1/Internet/Bk/InterestReport.aspx',
                                     method: "POST",
                                     headers: {
-                                        'Origin': 'https://prod.akelius.se',
-                                        'Referer': 'https://prod.akelius.se/IncitXpandWeb07038_1/Internet/Bk/Interestreport.aspx',
+                                        'Origin': 'https://xpdapi.akelius.se',
+                                        'Referer': 'https://xpdapi.akelius.se/IncitXpandWeb07038_1/Internet/Bk/Interestreport.aspx',
                                     },
                                     jar: cookiesArr[userIndex],
                                     form: {
@@ -6869,10 +6990,10 @@ let auto = {
                                     } else {
 
                                         request({
-                                            uri: listInterestButton.eq(0).attr('href').replace('xpdapi', 'prod'),
+                                            uri: listInterestButton.eq(0).attr('href'),
                                             method: "GET",
                                             headers: {
-                                                'Origin': 'https://prod.akelius.se',
+                                                'Origin': 'https://xpdapi.akelius.se',
                                                 'Referer': apartment.url,
                                             },
                                             jar: cookiesArr[userIndex],
@@ -6951,10 +7072,10 @@ let auto = {
                         };
 
                         request({
-                            uri: 'https://prod.akelius.se/IncitXpandWeb07038_1/Internet/Cm/Logon.aspx',
+                            uri: 'https://xpdapi.akelius.se/IncitXpandWeb07038_1/Internet/Cm/Logon.aspx',
                             method: "GET",
                             headers: {
-                                'Origin': 'https://prod.akelius.se',
+                                'Origin': 'https://xpdapi.akelius.se',
                             },
                             followRedirect: false,
                             jar: cookiesArr[userIndex]
@@ -6986,8 +7107,8 @@ let auto = {
                                 uri: res.request.uri.href,
                                 method: "POST",
                                 headers: {
-                                    'Origin': 'https://prod.akelius.se',
-                                    'Referer': 'https://prod.akelius.se/IncitXpandWeb07038_1/Internet/Cm/Logon.aspx',
+                                    'Origin': 'https://xpdapi.akelius.se',
+                                    'Referer': 'https://xpdapi.akelius.se/IncitXpandWeb07038_1/Internet/Cm/Logon.aspx',
                                 },
                                 jar: cookiesArr[userIndex],
                                 encoding: 'binary',
@@ -7033,11 +7154,11 @@ let auto = {
 
 
                                 request({
-                                    uri: 'https://prod.akelius.se/IncitXpandWeb07038_1/Internet/Bk/Interestreport.aspx',
+                                    uri: 'https://xpdapi.akelius.se/IncitXpandWeb07038_1/Internet/Bk/Interestreport.aspx',
                                     method: "GET",
                                     headers: {
-                                        'Origin': 'https://prod.akelius.se',
-                                        'Referer': 'https://prod.akelius.se/IncitXpandWeb07038_1/Internet/Cm/StartLoggedOn.aspx',
+                                        'Origin': 'https://xpdapi.akelius.se',
+                                        'Referer': 'https://xpdapi.akelius.se/IncitXpandWeb07038_1/Internet/Cm/StartLoggedOn.aspx',
                                     },
                                     followRedirect: false,
                                     jar: cookiesArr[userIndex],
@@ -7291,10 +7412,10 @@ let auto = {
                                      } else {
 
                                          request({
-                                             uri: listInterestButton.eq(0).attr('href').replace('xpdapi', 'prod'),
+                                             uri: listInterestButton.eq(0).attr('href').replace('xpdapi', 'xpdapi'),
                                              method: "GET",
                                              headers: {
-                                                 'Origin': 'https://prod.akelius.se',
+                                                 'Origin': 'https://xpdapi.akelius.se',
                                                  'Referer': apartment.url,
                                              },
                                              jar: cookiesArr[userIndex],
@@ -7373,10 +7494,10 @@ let auto = {
                          };
 
                          request({
-                             uri: 'https://prod.akelius.se/IncitXpandWeb07038_1/Internet/Cm/Logon.aspx',
+                             uri: 'https://xpdapi.akelius.se/IncitXpandWeb07038_1/Internet/Cm/Logon.aspx',
                              method: "GET",
                              headers: {
-                                 'Origin': 'https://prod.akelius.se',
+                                 'Origin': 'https://xpdapi.akelius.se',
                              },
                              followRedirect: false,
                              jar: cookiesArr[userIndex]
@@ -7408,8 +7529,8 @@ let auto = {
                                  uri: res.request.uri.href,
                                  method: "POST",
                                  headers: {
-                                     'Origin': 'https://prod.akelius.se',
-                                     'Referer': 'https://prod.akelius.se/IncitXpandWeb07038_1/Internet/Cm/Logon.aspx',
+                                     'Origin': 'https://xpdapi.akelius.se',
+                                     'Referer': 'https://xpdapi.akelius.se/IncitXpandWeb07038_1/Internet/Cm/Logon.aspx',
                                  },
                                  jar: cookiesArr[userIndex],
                                  encoding: 'binary',
@@ -7459,11 +7580,11 @@ let auto = {
 
 
                                  request({
-                                     uri: 'https://prod.akelius.se/IncitXpandWeb07038_1/Internet/Bk/Interestreport.aspx',
+                                     uri: 'https://xpdapi.akelius.se/IncitXpandWeb07038_1/Internet/Bk/Interestreport.aspx',
                                      method: "GET",
                                      headers: {
-                                         'Origin': 'https://prod.akelius.se',
-                                         'Referer': 'https://prod.akelius.se/IncitXpandWeb07038_1/Internet/Cm/StartLoggedOn.aspx',
+                                         'Origin': 'https://xpdapi.akelius.se',
+                                         'Referer': 'https://xpdapi.akelius.se/IncitXpandWeb07038_1/Internet/Cm/StartLoggedOn.aspx',
                                      },
                                      followRedirect: false,
                                      jar: cookiesArr[userIndex],
@@ -7734,14 +7855,17 @@ let auto = {
                                     } else {
 
                                         var $ = cheerio.load(responseObj.html['objektintresse']);
-                                        let infoText = $('[data-action="intresse.skapa"]').eq(0).text().trim();
-                                        let refidIntresse = $('form input[name="intresse.refid"]').eq(0).attr('value').trim();
+                                        let infoText = $('[data-action="intresse.skapa"]').eq(0).text();
+                                        let refidIntresse = $('form input[name="intresse.refid"]').eq(0).attr('value');
 
                                         if (!(refidIntresse && infoText)) {
                                             writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
                                             sendErrorEmail(funcName + ': refidIntresse || infoText is invalid! infoText==' + infoText + ' refidIntresse ==' + refidIntresse);
                                             return auto.error(funcName, 'refidIntresse || infoText is invalid! infoText==' + infoText + ' refidIntresse ==' + refidIntresse, mainCB);
                                         }
+
+                                        infoText = infoText.trim()
+                                        refidIntresse = refidIntresse.trim()
 
                                         if (infoText.contains('Anmäl intresse')) {
 
@@ -8310,6 +8434,9 @@ if (config.enableServer) {
     app.disable('x-powered-by');
     app.set('trust proxy', true);
 
+    app.use(bodyParser.urlencoded({ extended: false }))
+    app.use(bodyParser.json())
+
     app.use(function (request, response, next) {
         if (!request.secure) {
             response.redirect("https://" + request.headers.host + request.url);
@@ -8348,9 +8475,8 @@ if (config.enableServer) {
             html += '<td class="column1"><a draggable="false" ' + (dbAva***REMOVED***ble[i].type == "fast" || dbAva***REMOVED***ble[i].type == "sigtuna" ? 'style="color:red; "' : ' ') + 'href="' + (dbAva***REMOVED***ble[i].info.idUrl || dbAva***REMOVED***ble[i].url) + '" target="_blank">' + dbAva***REMOVED***ble[i].id + '</a></td>\n';
             html += '<td class="column2">' + dbAva***REMOVED***ble[i].price + ':-</td>\n';
             html += '<td class="column3">' + dbAva***REMOVED***ble[i].rooms + ' Rum</td>\n';
-            html += '<td class="column4"><a draggable="false" target="_blank" href="' + (config.homepagesObj[dbAva***REMOVED***ble[i].site] || 'https://www.google.com/search?q=' + dbAva***REMOVED***ble[i].site) + '"><img draggable="false" alt="' + dbAva***REMOVED***ble[i].site + '" src="img/png/small/' + dbAva***REMOVED***ble[i].site + '.png"></a></td>\n';
+            html += '<td class="column4"><a draggable="false" rel="noopener noreferrer" target="_blank" href="' + (config.homepagesObj[dbAva***REMOVED***ble[i].site] || 'https://www.google.com/search?q=' + dbAva***REMOVED***ble[i].site) + '"><img draggable="false" alt="' + dbAva***REMOVED***ble[i].site + '" src="img/png/small/' + dbAva***REMOVED***ble[i].site + '.png"></a></td>\n';
             html += '</tr>\n';
-
         }
 
         if (!(dbAva***REMOVED***ble.length)) {
@@ -8359,7 +8485,7 @@ if (config.enableServer) {
 
         html += '</tbody>';
 
-        var imgHost = 'https://***REMOVED******REMOVED***.net/bf-watcher/';
+        var imgHost = 'https://***REMOVED******REMOVED***.com/bf-watcher/';
 
         editedTemplate = editedTemplate.replace('{TBODY}', html)
             .replace('{DATETIME}', getDateTime())
@@ -8437,7 +8563,7 @@ if (config.enableServer) {
 
 
                 html += '<tr id="' + site + '">\n';
-                html += '<td class="column1"><a draggable="false" target="_blank" href="' + (config.homepagesObj[site] || 'https://www.google.com/search?q=' + site) + '"><img draggable="false" alt="' + site + '" src="img/png/small/' + site + '.png"></a></td>\n';
+                html += '<td class="column1"><a draggable="false" rel="noopener noreferrer" target="_blank" href="' + (config.homepagesObj[site] || 'https://www.google.com/search?q=' + site) + '"><img draggable="false" alt="' + site + '" src="img/png/small/' + site + '.png"></a></td>\n';
                 html += '<td class="column2 ' + check.lastCheckedObj[site].status + '">' + column2Html + '</td>\n';
                 html += '<td class="column3">' + (check.lastCheckedObj[site] && check.lastCheckedObj[site].lastChecked ? check.lastCheckedObj[site].lastChecked.replace(getDate() + ' ', '').replace(getDate(-1), 'Yesterday at') : 'None') + '</td>\n';
                 html += '<td class="column4">' + (auto.hasOwnProperty(site) ? 'YES' : 'NO') + '</td>\n';
@@ -8449,7 +8575,7 @@ if (config.enableServer) {
 
         html += '</tbody>';
 
-        var imgHost = 'https://***REMOVED******REMOVED***.net/bf-watcher/';
+        var imgHost = 'https://***REMOVED******REMOVED***.com/bf-watcher/';
 
 
         let nextDate;
@@ -8505,6 +8631,50 @@ if (config.enableServer) {
 
 
     });
+
+    app.get('/bf-watcher/call', function (req, res) {
+
+        client.calls
+            .create({
+                url: 'https://handler.twilio.com/twiml/***REMOVED***',
+                to: '+46***REMOVED***',
+                from: '+***REMOVED***',
+                statusCallback: 'https://***REMOVED******REMOVED***.com/bf-watcher/events',
+                statusCallbackEvent: ['initiated', 'answered', 'ringing', 'completed'],
+                statusCallbackMethod: 'POST',
+                machineDetection: 'Enable'
+            })
+            .then(call => console.log('Call has been sent'));
+
+        res.status(200).send('Call Sent!');
+    });
+
+    app.post('/bf-watcher/voice', (request, response) => {
+
+        console.log('Call received!')
+
+
+        // Use the Twilio Node.js SDK to build an XML response
+        const twiml = new VoiceResponse();
+
+        twiml.say({
+            language: 'sv-SE'
+        }, 'Hej ***REMOVED***! Välkommen till denna samtal, vad vill du göra nu?');
+
+        // Render the response as XML in reply to the webhook request
+        response.type('text/xml');
+        response.send(twiml.toString());
+    });
+
+
+    app.post('/bf-watcher/events', function (req, res) {
+        console.log(req.body.CallStatus)
+
+        if (req.body.CallStatus == 'completed') {
+            console.log(req.body['AnsweredBy'])
+        }
+        res.status(200).send();
+    })
 
 
     let httpsServer = https.createServer({
@@ -8814,7 +8984,7 @@ function sendErrorEmail(err) {
             from: '"BF Watcher" <***REMOVED***acc1@gmail.com>', // sender address
             to: '***REMOVED******REMOVED***97@gmail.com',
             subject: 'BF Watcher Error!', // Subject line
-            text: err, // html body
+            html: err, // html body
         }, function (success, emailsArr) {
 
             if (!success) {
@@ -8871,7 +9041,7 @@ function writeBodyToFile(path, body, origin) {
 }
 
 function apartmentIsInvalid(id, price, rooms, area) {
-    return price < 1000 || price > 20000 || rooms < 1 || rooms > 8 || area < 10 || area > 200 || id.length < 3
+    return price < 1000 || price > 30000 || rooms < 1 || rooms > 8 || area < 10 || area > 200 || id.length < 3
 }
 
 function isBase64(str) {
