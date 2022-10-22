@@ -3,7 +3,6 @@ let proxies = [
     'http://127.0.0.1:8888'
 ];
 
-
 module.exports = {
 
     mysql: {
@@ -18,7 +17,7 @@ module.exports = {
         {
             name: 'User 1',
             email: 'user1@example.com',
-            pNummer: '920101-1721', // personnummer
+            pNummer: '900101-0001', // personnummer
             auto: {
                 hhem: {
                     active: true,
@@ -62,7 +61,7 @@ module.exports = {
         {
             name: 'User 2',
             email: 'user2@example.com',
-            pNummer: '940101-1291', // personnummer
+            pNummer: '920101-1001', // personnummer
             auto: {
                 hhem: {
                     active: true,
@@ -167,7 +166,7 @@ module.exports = {
 
     },
     homepagesObj: {
-        hhem: 'https://bostad.hasselbyhem.se/HSS/Object/object_list.aspx?objectgroup=1&action=Ava***REMOVED***ble',
+        hhem: 'https://bostad.hasselbyhem.se/HSS/Object/object_list.aspx?objectgroup=1&action=Available',
         vicpark: 'https://minasidor.victoriapark.se/ledigt/sok/objekt', //'https://minasidor.victoriapark.se/ledigt/lagenhet?marketarea=AREA_777&selectedarea=STOCKHOLMORT',
         heimstaden: 'https://mitt.heimstaden.com/HSS/Object/object_list.aspx?objectgroup=1&marketarea=AREA_1345&selectedarea=V%C3%A4llingby',
         wahlin: 'https://wahlinfastigheter.se/lediga-objekt/lagenheter/',
