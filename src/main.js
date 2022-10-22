@@ -1,7 +1,5 @@
 process.env.UV_THREADPOOL_SIZE = 128;
-NODE_TLS_REJECT_UNAUTHORIZED=0;
-
-// If having problem with encoded response as unicode, use encoding: 'binary',
+NODE_TLS_REJECT_UNAUTHORIZED = 0;
 
 let config = require('../config.js'),
     https = require('https'),
@@ -152,9 +150,9 @@ let permanentlyExcluded = [
 let check = {
     errorsObj: {},
     lastCheckedObj: {},
-    dbAva***REMOVED***ble: [],
+    dbAvailable: [],
     excludedIDs: [],
-    ava***REMOVED***ble: [],
+    available: [],
     currentlyRunning: false,
     init: function (cb, toIncludeArr, toExcludeArr, log) {
 
@@ -162,15 +160,15 @@ let check = {
         //toIncludeArr = toIncludeArr || [];
 
         //check.errorsObj = {};
-        check.dbAva***REMOVED***ble = [];
+        check.dbAvailable = [];
         check.excludedIDs = check.excludedIDs || [];
-        check.ava***REMOVED***ble = [];
+        check.available = [];
 
-        initDB(function (status, dbAva***REMOVED***ble) {
-            check.dbAva***REMOVED***ble = typeof dbAva***REMOVED***ble !== "undefined" ? dbAva***REMOVED***ble : check.dbAva***REMOVED***ble;
+        initDB(function (status, dbAvailable) {
+            check.dbAvailable = typeof dbAvailable !== "undefined" ? dbAvailable : check.dbAvailable;
 
 
-            check.dbAva***REMOVED***ble = check.dbAva***REMOVED***ble
+            check.dbAvailable = check.dbAvailable
                 .filter(apartment => !(toExcludeArr.contains(apartment.site)))
                 .map(function (apartment) {
                     apartment = Object.assign({}, apartment);
@@ -195,7 +193,7 @@ let check = {
 
             for (var prop in check) {
 
-                if (!(['init', 'all', 'done', 'error', 'process', 'errorsObj', 'dbAva***REMOVED***ble', 'excludedIDs', 'ava***REMOVED***ble', 'lastCheckedObj', 'currentlyRunning'].contains(prop))) {
+                if (!(['init', 'all', 'done', 'error', 'process', 'errorsObj', 'dbAvailable', 'excludedIDs', 'available', 'lastCheckedObj', 'currentlyRunning'].contains(prop))) {
                     check.lastCheckedObj[prop] = check.lastCheckedObj[prop] || {};
                     check.lastCheckedObj[prop]['status'] = 'excluded';
                 }
@@ -216,7 +214,7 @@ let check = {
 
         var allList = [];
         var hour = (new Date()).getHours();
-        var toExclude = ['init', 'all', 'done', 'error', 'process', 'errorsObj', 'dbAva***REMOVED***ble', 'excludedIDs', 'ava***REMOVED***ble', 'lastCheckedObj', 'currentlyRunning'].concat(allExcludedSites);
+        var toExclude = ['init', 'all', 'done', 'error', 'process', 'errorsObj', 'dbAvailable', 'excludedIDs', 'available', 'lastCheckedObj', 'currentlyRunning'].concat(allExcludedSites);
         for (var prop in check) {
 
             if (allExcludedSites.contains(prop)) {
@@ -247,7 +245,7 @@ let check = {
 
                     check.currentlyRunning = false;
 
-                    check.ava***REMOVED***ble = apartmentsArr;
+                    check.available = apartmentsArr;
                     cb(apartmentsArr, null, toIncludeArr, toExcludeArr, log);
                 });
             } else {
@@ -291,23 +289,23 @@ let check = {
         check.done(cb, funcName, [], err);
         //return check.errorsObj[funcName] = err;
     },
-    process: function (ava***REMOVED***ble, cb, toIncludeArr, toExcludeArr, log, currentlyRunning) {
-        check.ava***REMOVED***ble = typeof ava***REMOVED***ble === "object" ? ava***REMOVED***ble : check.ava***REMOVED***ble;
+    process: function (available, cb, toIncludeArr, toExcludeArr, log, currentlyRunning) {
+        check.available = typeof available === "object" ? available : check.available;
         currentlyRunning = typeof currentlyRunning !== "undefined" ? currentlyRunning : check.currentlyRunning;
 
         toIncludeArr = toIncludeArr || [];
         toExcludeArr = toExcludeArr || config.sitesToExclude;
 
         if (config.debug) {
-            console.log('\nprocess() check.ava***REMOVED***ble = \n');
-            console.table(check.ava***REMOVED***ble);
+            console.log('\nprocess() check.available = \n');
+            console.table(check.available);
         }
 
         var processDone = function () {
             if (config.debug) {
                 //console.log('\nAll Done!'.cyan);
             }
-            return typeof cb == "function" ? cb(ava***REMOVED***ble, currentlyRunning) : null;
+            return typeof cb == "function" ? cb(available, currentlyRunning) : null;
         };
 
         if (currentlyRunning) {
@@ -323,37 +321,37 @@ let check = {
 
         for (var site in check.errorsObj) {
             if (check.errorsObj.hasOwnProperty(site) && (!(toIncludeArr.length) || toIncludeArr.contains(site))) {
-                check.dbAva***REMOVED***ble = check.dbAva***REMOVED***ble.filter(apartment => !(site == apartment.site));
-                check.ava***REMOVED***ble = check.ava***REMOVED***ble.filter(apartment => !(site == apartment.site));
+                check.dbAvailable = check.dbAvailable.filter(apartment => !(site == apartment.site));
+                check.available = check.available.filter(apartment => !(site == apartment.site));
 
                 console.log(('Skipped ' + site + ': ' + check.errorsObj[site]).red);
             }
         }
 
-        var apartmentsToRemove = check.dbAva***REMOVED***ble.filter(function (dbApartment) {
+        var apartmentsToRemove = check.dbAvailable.filter(function (dbApartment) {
 
             if (toExcludeArr.contains(dbApartment.site) || (toIncludeArr.length && !(toIncludeArr.contains(dbApartment.site)))) {
                 return false;
             } else {
-                return !(check.ava***REMOVED***ble.some(apartment => apartment.id === dbApartment.id));
+                return !(check.available.some(apartment => apartment.id === dbApartment.id));
             }
         });
 
         var newApartments = [];
 
 
-        check.ava***REMOVED***ble = check.ava***REMOVED***ble
+        check.available = check.available
             .filter(apartment => !(check.excludedIDs.contains(apartment.id)))
             .sort((a, b) => a.price > b.price ? 1 : (a.price === b.price ? (b.rooms > a.rooms ? 1 : -1) : -1));
 
 
-        check.ava***REMOVED***ble.forEach(function (apartment) {
-            if (!(check.dbAva***REMOVED***ble.some(e => e.id === apartment.id))) {
+        check.available.forEach(function (apartment) {
+            if (!(check.dbAvailable.some(e => e.id === apartment.id))) {
                 if ((!(toIncludeArr.length) || toIncludeArr.contains(apartment.site)) && !(toExcludeArr.contains(apartment.site))) {
                     newApartments.push(apartment);
 
                     if (!(apartmentIsInvalid(apartment.id, apartment.price, apartment.rooms, apartment.area))) {
-                        check.dbAva***REMOVED***ble.push(apartment);
+                        check.dbAvailable.push(apartment);
                     }
                 }
             }
@@ -391,7 +389,7 @@ let check = {
 
 
                 if (i == newApartments.length - 1 && addmysqlQuery.length) {
-                    DB("INSERT INTO ava***REMOVED***ble (id, site, price, rooms, area, url, type, added, info) VALUES " + addmysqlQuery.slice(0, -1) + " ON DUPLICATE KEY UPDATE id=id", function (err) {
+                    DB("INSERT INTO available (id, site, price, rooms, area, url, type, added, info) VALUES " + addmysqlQuery.slice(0, -1) + " ON DUPLICATE KEY UPDATE id=id", function (err) {
                         if (err) {
                             console.log("DB ADD ERROR");
                         }
@@ -446,7 +444,7 @@ let check = {
                             editedEmailTemp = editedEmailTemp.replace('{TBODY}', html);
 
 
-                            var imgHost = 'https://***REMOVED******REMOVED***.com/bf-watcher/';
+                            var imgHost = 'https://example.com/bf-watcher/';
                             var regex = /<img.*?src="(.*?)".*?>|<link.*?href="(.*?)".*?>/g;
                             var imgUrlsArr = regex.matchAll(editedEmailTemp);
                             var attachmentsArr = [];
@@ -471,8 +469,8 @@ let check = {
 
 
                             sendEmail({
-                                from: '"BF Watcher" <***REMOVED***acc1@gmail.com>', // sender address
-                                to: email, //'***REMOVED******REMOVED******REMOVED***'
+                                from: '"BF Watcher" <exampleEmail@gmail.com>', // sender address
+                                to: email,
                                 subject: 'BF Watcher ✔', // Subject line
                                 html: editedEmailTemp, // html body
                                 attachments: attachmentsArr
@@ -505,7 +503,7 @@ let check = {
         if (apartmentsToRemove.length > 0) {
             apartmentsToRemove.forEach(function (apartment, i) {
                 console.log(getDateTime() + '   REMOVED: ' + apartment.site + ': ' + apartment.id);
-                check.dbAva***REMOVED***ble = check.dbAva***REMOVED***ble.filter(function (dbApartment) {
+                check.dbAvailable = check.dbAvailable.filter(function (dbApartment) {
                     return !(dbApartment.id == apartment.id)
                 });
 
@@ -514,12 +512,12 @@ let check = {
                 if (i == apartmentsToRemove.length - 1) {
 
 
-                    DB("INSERT IGNORE INTO removed (id, site, price, rooms, area, url, type, added, removed, info) SELECT id, site, price, rooms, area, url, type, added, '" + getDateTime() + "', info FROM ava***REMOVED***ble WHERE id IN (" + removesqlQuery.slice(0, -1) + ")", function (err) {
+                    DB("INSERT IGNORE INTO removed (id, site, price, rooms, area, url, type, added, removed, info) SELECT id, site, price, rooms, area, url, type, added, '" + getDateTime() + "', info FROM available WHERE id IN (" + removesqlQuery.slice(0, -1) + ")", function (err) {
                         if (err) {
                             return console.log('DB REMOVE ERROR');
                         }
 
-                        DB("DELETE FROM ava***REMOVED***ble WHERE id IN (" + removesqlQuery.slice(0, -1) + ")");
+                        DB("DELETE FROM available WHERE id IN (" + removesqlQuery.slice(0, -1) + ")");
 
                     });
 
@@ -544,7 +542,7 @@ let check = {
 
         try {
 
-                request({
+            request({
                 uri: 'https://login001.stockholm.se/siteminderagent/forms/login.fcc',
                 method: "POST",
                 headers: {
@@ -556,8 +554,8 @@ let check = {
                     "target": "-SM-https://bostad.stockholm.se/secure/login",
                     "smauthreason": 0,
                     "smagentname": "bostad.stockholm.se",
-                    "USER": '***REMOVED******REMOVED******REMOVED***',
-                    "PASSWORD": '***REMOVED******REMOVED******REMOVED***'
+                    "USER": '***REMOVED***',
+                    "PASSWORD": '***REMOVED***'
                 },
             }, function (err, res, body) {
                 if (err) {
@@ -615,7 +613,7 @@ let check = {
 
                             var id = String(ad['AnnonsId']);
 
-                            if (!(check.dbAva***REMOVED***ble.some(apartment => apartment.id == id)) && !(check.excludedIDs.contains(id))) {
+                            if (!(check.dbAvailable.some(apartment => apartment.id == id)) && !(check.excludedIDs.contains(id))) {
 
                                 request({
                                     uri: 'https://bostad.stockholm.se' + ad['Url'],
@@ -686,7 +684,7 @@ let check = {
 
                                 if (!(check.excludedIDs.contains(id))) {
 
-                                    var dbApartment = check.dbAva***REMOVED***ble.find(apartment => apartment.id == id);
+                                    var dbApartment = check.dbAvailable.find(apartment => apartment.id == id);
 
                                     if (dbApartment) {
                                         localApartments.push(dbApartment);
@@ -727,7 +725,7 @@ let check = {
 
         delete check.errorsObj[funcName];
 
-        // GET https://bostad.hasselbyhem.se/HSS/Object/object_list.aspx?objectgroup=1&action=Ava***REMOVED***ble
+        // GET https://bostad.hasselbyhem.se/HSS/Object/object_list.aspx?objectgroup=1&action=Available
         // error on empty, capture it and remove useless get and post
 
         try {
@@ -755,7 +753,7 @@ let check = {
                  }
 
 
-                 if (!(body.contains('$btnAva***REMOVED***bleApartments'))) {
+                 if (!(body.contains('$btnAvailableApartments'))) {
 
                      if (typeof sent === "undefined") {
                          sendErrorEmail('HHEM EMPTY APARTMENTSLIST');
@@ -783,7 +781,7 @@ let check = {
                      followAllRedirects: true,
                      jar: cookies,
                      form: {
-                         '__EVENTTARGET': 'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$ListAva***REMOVED***ble1$btnAva***REMOVED***bleApartments',
+                         '__EVENTTARGET': 'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$ListAvailable1$btnAvailableApartments',
                          '__EVENTARGUMENT': '',
                          '__VIEWSTATE': viewstate,
                          '__VIEWSTATEGENERATOR': viewstategenerator,
@@ -849,7 +847,7 @@ let check = {
                             return;
                         }
 
-                        var ava***REMOVED***bleArr = extractBetweenStrings(pageBody, 'ObjectDetailsTemplateB.aspx?cmguid=', '">');
+                        var availableArr = extractBetweenStrings(pageBody, 'ObjectDetailsTemplateB.aspx?cmguid=', '">');
                         var $ = cheerio.load(pageBody);
                         var apartments = $('.gridlist [class^=listitem]');
 
@@ -868,10 +866,10 @@ let check = {
                                 return false;
                             }
 
-                            var url = 'https://bostad.hasselbyhem.se/HSS/Object/ObjectDetailsTemplateB.aspx?cmguid=' + (ava***REMOVED***bleArr[i].replace(/&amp;/g, '&'));
+                            var url = 'https://bostad.hasselbyhem.se/HSS/Object/ObjectDetailsTemplateB.aspx?cmguid=' + (availableArr[i].replace(/&amp;/g, '&'));
                             var interestAmount = parseInt(apartments.eq(i).find('[id$=ObjectInterestCount]').eq(0).text()) || 0;
 
-                            var apartmentinDb = check.dbAva***REMOVED***ble.some(function (dbApartment) {
+                            var apartmentinDb = check.dbAvailable.some(function (dbApartment) {
                                 if (dbApartment.url == url && dbApartment.price > 0) {
                                     dbApartment.interestAmount = interestAmount;
                                     dbApartment.info.idUrl = 'https://bostad.hasselbyhem.se/HSS/Object/ObjectDetailsTemplateB.aspx?id=' + dbApartment.id;
@@ -979,7 +977,7 @@ let check = {
                     let index = 0;
 
                     if (noOfPages < 6 || pageNr < 4) {
-                        index = pageNr-1
+                        index = pageNr - 1
                     } else if (noOfPages - pageNr === 0) {
                         index = 4;
                     } else {
@@ -987,11 +985,11 @@ let check = {
                     }
 
                     request({
-                        uri: 'https://bostad.hasselbyhem.se/HSS/Object/object_list.aspx?objectgroup=1&action=Ava***REMOVED***ble',
+                        uri: 'https://bostad.hasselbyhem.se/HSS/Object/object_list.aspx?objectgroup=1&action=Available',
                         method: "POST",
                         headers: {
                             'Origin': 'https://bostad.hasselbyhem.se',
-                            'Referer': 'https://bostad.hasselbyhem.se/HSS/Object/object_list.aspx?objectgroup=1&action=Ava***REMOVED***ble',
+                            'Referer': 'https://bostad.hasselbyhem.se/HSS/Object/object_list.aspx?objectgroup=1&action=Available',
                         },
                         followAllRedirects: true,
                         jar: cookies,
@@ -1141,7 +1139,6 @@ let check = {
                         });
 
 
-
                         if (!(apartments.length) && pageIndex == bodysArr.length - 1) {
                             return cb();
                         } else if (!(apartments.length)) {
@@ -1158,7 +1155,7 @@ let check = {
                             var url = 'https://mitt.heimstaden.com/' + apartments.eq(i).find('[id$="ObjectDetailsUrl"]').eq(0).attr('href').substring(6);
                             var rooms = parseInt(apartments.eq(i).find('[id$="NoOfRooms"]').eq(0).text().replace(/\D/g, '')) || 0;
 
-                            var apartmentinDb = check.dbAva***REMOVED***ble.some(function (dbApartment) {
+                            var apartmentinDb = check.dbAvailable.some(function (dbApartment) {
                                 if (dbApartment.url == url && dbApartment.price > 0) {
                                     localApartments.push(dbApartment);
                                     return true;
@@ -1221,15 +1218,12 @@ let check = {
                     let index = 0;
 
                     if (noOfPages < 6 || pageNr < 4) {
-                        index = pageNr-1
+                        index = pageNr - 1
                     } else if (noOfPages - pageNr === 0) {
                         index = 4;
                     } else {
                         index = 3;
                     }
-
-
-
 
 
                     request({
@@ -1409,8 +1403,8 @@ let check = {
                             emailSentNewLocations.push(areaCode);
 
                             sendEmail({
-                                from: '"BF Watcher" <***REMOVED***acc1@gmail.com>', // sender address
-                                to: '***REMOVED******REMOVED******REMOVED***',
+                                from: '"BF Watcher" <exampleEmail@gmail.com>', // sender address
+                                to: 'exampleEmail@gmail.com',
                                 subject: 'BF Watcher VICPARK ✔', // Subject line
                                 text: 'NEW VICPARK LOCATION: ' + areaCode + ' ' + citiesList.eq(i).next().text(), // html body
                             }, function (success, emailsArr) {
@@ -1548,7 +1542,7 @@ let check = {
                                 var url = 'https://www.vasbyhem.se/ledigt/' + (apartment.find('a[id$=ObjectDetailsUrl]').eq(0).attr('href').replace('../', ''));
                                 var interestAmount = parseInt(apartment.find('[id$=ObjectInterestCount]').eq(0).text()) || 0;
 
-                                var apartmentinDb = check.dbAva***REMOVED***ble.some(function (dbApartment) {
+                                var apartmentinDb = check.dbAvailable.some(function (dbApartment) {
                                     if (dbApartment.url == url && dbApartment.price > 0) {
                                         dbApartment.interestAmount = interestAmount;
                                         localApartments.push(dbApartment);
@@ -1648,7 +1642,7 @@ let check = {
                     let index = 0;
 
                     if (noOfPages < 6 || pageNr < 4) {
-                        index = pageNr-1
+                        index = pageNr - 1
                     } else if (noOfPages - pageNr === 0) {
                         index = 4;
                     } else {
@@ -1775,7 +1769,6 @@ let check = {
                 }
 
 
-
                 var $;
 
                 var noOfPages = 1;
@@ -1802,7 +1795,6 @@ let check = {
                         });
 
 
-
                         if (!(apartments.length) && pageIndex == bodysArr.length - 1) {
                             return cb();
                         } else if (!(apartments.length)) {
@@ -1819,7 +1811,7 @@ let check = {
                             var url = 'https://minasidor.victoriapark.se/ledigt' + $('[id$="ObjectDetailsUrl"]').eq(i).attr('href').substring(2);
                             var rooms = parseInt($('[id$="NoOfRooms"]').eq(i).text().replace(/\D/g, '')) || 0;
 
-                            var apartmentinDb = check.dbAva***REMOVED***ble.some(function (dbApartment) {
+                            var apartmentinDb = check.dbAvailable.some(function (dbApartment) {
                                 if (dbApartment.url == url && dbApartment.price > 0) {
                                     localApartments.push(dbApartment);
                                     return true;
@@ -1890,148 +1882,145 @@ let check = {
                     }
 
 
-                   if (pageNr === 1) {
-                       request({
-                           uri: 'https://minasidor.victoriapark.se/ledigt/sok/objekt',
-                           method: "POST",
-                           headers: {
-                               'Referer': 'https://minasidor.victoriapark.se/ledigt/sok/objekt',
-                               'Origin': 'https://minasidor.victoriapark.se'
-                           },
-                           followAllRedirects: true,
-                           jar: cookies,
-                           form: {
-                               '__EVENTTARGET': '',
-                               '__EVENTARGUMENT': '',
-                               '__LASTFOCUS': '',
-                               '__VIEWSTATE': viewstate,
-                               '__VIEWSTATEGENERATOR': viewstategenerator,
-                               '__EVENTVALIDATION': eventvalidation,
-                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$rblObjectGroup': 1,
-                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$cblAreas$35': 'AREA_777',
-                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMinRooms': 'Min:',
-                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMaxRooms': 'Max:',
-                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMinFloor': 'Min:',
-                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMaxFloor': 'Max:',
-                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMinSize': 'Min:',
-                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMaxSize': 'Max:',
-                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$txtMaxCost': '',
-                               'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$btnSearch': 'Sök',
-                               'ctl00$ctl01$hdnBrowserCheck': '',
-                               'ctl00$ctl01$hdnRequestVerificationToken': ''
-                   },
-                   },
+                    if (pageNr === 1) {
+                        request({
+                                uri: 'https://minasidor.victoriapark.se/ledigt/sok/objekt',
+                                method: "POST",
+                                headers: {
+                                    'Referer': 'https://minasidor.victoriapark.se/ledigt/sok/objekt',
+                                    'Origin': 'https://minasidor.victoriapark.se'
+                                },
+                                followAllRedirects: true,
+                                jar: cookies,
+                                form: {
+                                    '__EVENTTARGET': '',
+                                    '__EVENTARGUMENT': '',
+                                    '__LASTFOCUS': '',
+                                    '__VIEWSTATE': viewstate,
+                                    '__VIEWSTATEGENERATOR': viewstategenerator,
+                                    '__EVENTVALIDATION': eventvalidation,
+                                    'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$rblObjectGroup': 1,
+                                    'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$cblAreas$35': 'AREA_777',
+                                    'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMinRooms': 'Min:',
+                                    'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMaxRooms': 'Max:',
+                                    'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMinFloor': 'Min:',
+                                    'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMaxFloor': 'Max:',
+                                    'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMinSize': 'Min:',
+                                    'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$drpMaxSize': 'Max:',
+                                    'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$txtMaxCost': '',
+                                    'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$btnSearch': 'Sök',
+                                    'ctl00$ctl01$hdnBrowserCheck': '',
+                                    'ctl00$ctl01$hdnRequestVerificationToken': ''
+                                },
+                            },
 
-                       function (err, res, body) {
+                            function (err, res, body) {
 
-                           if (err) {
-                               return check.error(funcName, ' err: ' + err.code + (typeof res !== "undefined" ? 'statuscode = ' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode] : ''), mainCB);
-                           } else if (res.statusCode != 200) {
-                               let errorText = 'statuscode != 200 ==' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode];
-                               if (isRedirect(res.statusCode)) {
-                                   sendErrorEmail(funcName + ' \n' + errorText);
-                               }
-                               writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
-                               return check.error(funcName, errorText, mainCB);
-                           } else if (res.request._redirect.redirects.length > 1) {
-                               writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
-                               return check.error(funcName, ' redirects Length > 1 ==' + res.request._redirect.redirects.length, mainCB);
-                           }
+                                if (err) {
+                                    return check.error(funcName, ' err: ' + err.code + (typeof res !== "undefined" ? 'statuscode = ' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode] : ''), mainCB);
+                                } else if (res.statusCode != 200) {
+                                    let errorText = 'statuscode != 200 ==' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode];
+                                    if (isRedirect(res.statusCode)) {
+                                        sendErrorEmail(funcName + ' \n' + errorText);
+                                    }
+                                    writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
+                                    return check.error(funcName, errorText, mainCB);
+                                } else if (res.request._redirect.redirects.length > 1) {
+                                    writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
+                                    return check.error(funcName, ' redirects Length > 1 ==' + res.request._redirect.redirects.length, mainCB);
+                                }
 
-                               eventvalidation = extractBetweenStrings(body, 'EVENTVALIDATION" value="', '" />')[0];
-                           viewstate = extractBetweenStrings(body, 'VIEWSTATE" value="', '" />')[0];
-                           viewstategenerator = extractBetweenStrings(body, 'VIEWSTATEGENERATOR" value="', '" />')[0];
+                                eventvalidation = extractBetweenStrings(body, 'EVENTVALIDATION" value="', '" />')[0];
+                                viewstate = extractBetweenStrings(body, 'VIEWSTATE" value="', '" />')[0];
+                                viewstategenerator = extractBetweenStrings(body, 'VIEWSTATEGENERATOR" value="', '" />')[0];
 
-                           if (!(eventvalidation && viewstate && viewstategenerator)) {
-                               return auto.error(funcName, 'eventvalidation||viewstate||... is invalid', mainCB);
-                           }
+                                if (!(eventvalidation && viewstate && viewstategenerator)) {
+                                    return auto.error(funcName, 'eventvalidation||viewstate||... is invalid', mainCB);
+                                }
 
-                               $ = cheerio.load(body)
-                           bodysArr.push(body);
-                               noOfPages = parseInt($('div.navbar [id$=_lblNoOfPages]').eq(0).text().replace(/\D/g, '')) || 1
+                                $ = cheerio.load(body)
+                                bodysArr.push(body);
+                                noOfPages = parseInt($('div.navbar [id$=_lblNoOfPages]').eq(0).text().replace(/\D/g, '')) || 1
 
 
-                           return cb();
-                       }
-
-                   )
-                   } else
-                       {
-
-                    request({
-                        uri: 'https://minasidor.victoriapark.se/ledigt/sok/lagenhet',
-                        method: "POST",
-                        headers: {
-                            'Referer': 'https://minasidor.victoriapark.se/ledigt/sok/lagenhet',
-                            'Origin': 'https://minasidor.victoriapark.se',
-                        },
-                        followAllRedirects: true,
-                        jar: cookies,
-                        form: {
-                            '__EVENTTARGET': 'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$ucNavBar$rptButtons$ctl' + String((index)).padStart(2, '0') + '$btnPage',
-                            '__EVENTARGUMENT': '',
-                            '__VIEWSTATE': viewstate,
-                            '__VIEWSTATEGENERATOR': viewstategenerator,
-                            '__EVENTVALIDATION': eventvalidation,
-                            'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$cblAreas$35': 'AREA_777', // Tensta
-                            /*'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$cblAreas$5': 'AREA_771',
-                            'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$cblAreas$28': 'AREA_725',
-                            'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$cblAreas$29': 'AREA_776',*/
-                            'ctl00$ctl01$hdnRequestVerificationToken': ''
-                },
-                },
-
-                    function (err, res, body) {
-
-                        if (err) {
-                            return check.error(funcName, ' err: ' + err.code + (typeof res !== "undefined" ? 'statuscode = ' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode] : ''), mainCB);
-                        } else if (res.statusCode != 200) {
-                            let errorText = 'statuscode != 200 ==' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode];
-                            if (isRedirect(res.statusCode)) {
-                                sendErrorEmail(funcName + ' \n' + errorText);
+                                return cb();
                             }
-                            writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
-                            return check.error(funcName, errorText, mainCB);
-                        } else if (res.request._redirect.redirects.length > 1) {
-                            writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
-                            return check.error(funcName, ' redirects Length > 1 ==' + res.request._redirect.redirects.length, mainCB);
-                        } else if (!body) {
-                            return check.error(funcName, ' body is empty', mainCB);
-                        }
+                        )
+                    } else {
 
-                        eventvalidation = extractBetweenStrings(body, 'EVENTVALIDATION" value="', '" />')[0];
-                        viewstate = extractBetweenStrings(body, 'VIEWSTATE" value="', '" />')[0];
-                        viewstategenerator = extractBetweenStrings(body, 'VIEWSTATEGENERATOR" value="', '" />')[0];
+                        request({
+                                uri: 'https://minasidor.victoriapark.se/ledigt/sok/lagenhet',
+                                method: "POST",
+                                headers: {
+                                    'Referer': 'https://minasidor.victoriapark.se/ledigt/sok/lagenhet',
+                                    'Origin': 'https://minasidor.victoriapark.se',
+                                },
+                                followAllRedirects: true,
+                                jar: cookies,
+                                form: {
+                                    '__EVENTTARGET': 'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$ucNavBar$rptButtons$ctl' + String((index)).padStart(2, '0') + '$btnPage',
+                                    '__EVENTARGUMENT': '',
+                                    '__VIEWSTATE': viewstate,
+                                    '__VIEWSTATEGENERATOR': viewstategenerator,
+                                    '__EVENTVALIDATION': eventvalidation,
+                                    'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$cblAreas$35': 'AREA_777', // Tensta
+                                    /*'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$cblAreas$5': 'AREA_771',
+                                    'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$cblAreas$28': 'AREA_725',
+                                    'ctl00$ctl01$DefaultSiteContentPlaceHolder1$Col1$cblAreas$29': 'AREA_776',*/
+                                    'ctl00$ctl01$hdnRequestVerificationToken': ''
+                                },
+                            },
 
-                        if (!(eventvalidation && viewstate && viewstategenerator)) {
-                            return auto.error(funcName, 'eventvalidation||viewstate||... is invalid', mainCB);
-                        }
+                            function (err, res, body) {
 
-                        bodysArr.push(body);
+                                if (err) {
+                                    return check.error(funcName, ' err: ' + err.code + (typeof res !== "undefined" ? 'statuscode = ' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode] : ''), mainCB);
+                                } else if (res.statusCode != 200) {
+                                    let errorText = 'statuscode != 200 ==' + res.statusCode + ' ' + http.STATUS_CODES[res.statusCode];
+                                    if (isRedirect(res.statusCode)) {
+                                        sendErrorEmail(funcName + ' \n' + errorText);
+                                    }
+                                    writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
+                                    return check.error(funcName, errorText, mainCB);
+                                } else if (res.request._redirect.redirects.length > 1) {
+                                    writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
+                                    return check.error(funcName, ' redirects Length > 1 ==' + res.request._redirect.redirects.length, mainCB);
+                                } else if (!body) {
+                                    return check.error(funcName, ' body is empty', mainCB);
+                                }
 
-                        // return false if no ads on a page, this to abort async.series getting empty pages
-                        var $ = cheerio.load(body);
-                        if (!($('[id$="ObjectList_Container"] tr[class^="listitem"]').length)) {
-                            console.log((getDateTime() + ' ' + funcName + ': no ads on page ' + pageNr).red);
-                            writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
-                            sendErrorEmail(funcName + ': no ads on page ' + pageNr);
-                            noAdsOnPage = true;
-                            return cb();
-                        }
+                                eventvalidation = extractBetweenStrings(body, 'EVENTVALIDATION" value="', '" />')[0];
+                                viewstate = extractBetweenStrings(body, 'VIEWSTATE" value="', '" />')[0];
+                                viewstategenerator = extractBetweenStrings(body, 'VIEWSTATEGENERATOR" value="', '" />')[0];
 
-                        return cb();
+                                if (!(eventvalidation && viewstate && viewstategenerator)) {
+                                    return auto.error(funcName, 'eventvalidation||viewstate||... is invalid', mainCB);
+                                }
+
+                                bodysArr.push(body);
+
+                                // return false if no ads on a page, this to abort async.series getting empty pages
+                                var $ = cheerio.load(body);
+                                if (!($('[id$="ObjectList_Container"] tr[class^="listitem"]').length)) {
+                                    console.log((getDateTime() + ' ' + funcName + ': no ads on page ' + pageNr).red);
+                                    writeBodyToFile(config.logsPath + filenamify(`${funcName}_${getDateTime()}.html`), body, (new URL(res.request.uri.href)).origin);
+                                    sendErrorEmail(funcName + ': no ads on page ' + pageNr);
+                                    noAdsOnPage = true;
+                                    return cb();
+                                }
+
+                                return cb();
+                            }
+                        )
                     }
-
-                )
-                }
                 };
 
-                getPage(1, function() {
-                   /* for (let i = 1; i < noOfPages; i++) {
-                        functionList.push(function (cb) {
-                            getPage((i + 1), cb);
-                        })
-                    } */
+                getPage(1, function () {
+                    /* for (let i = 1; i < noOfPages; i++) {
+                         functionList.push(function (cb) {
+                             getPage((i + 1), cb);
+                         })
+                     } */
 
                     async.series(functionList, function () {
                         processPages(bodysArr, function () {
@@ -2134,8 +2123,8 @@ let check = {
                             emailSentNewLocations.push(areaCode);
 
                             sendEmail({
-                                from: '"BF Watcher" <***REMOVED***acc1@gmail.com>', // sender address
-                                to: '***REMOVED******REMOVED******REMOVED***',
+                                from: '"BF Watcher" <exampleEmail@gmail.com>', // sender address
+                                to: 'exampleEmail@gmail.com',
                                 subject: 'BF Watcher VICPARK ✔', // Subject line
                                 text: 'NEW VICPARK LOCATION: ' + areaCode + ' ' + citiesList.eq(i).next().text(), // html body
                             }, function (success, emailsArr) {
@@ -2185,7 +2174,20 @@ let check = {
         delete check.errorsObj[funcName];
 
         let postObj = {
-            Parm1: {"CompanyNo":0,"SyndicateNo":1,"ObjectMainGroupNo":1,"MarketPlaces":[{"No":101},{"No":100}],"Advertisements":[{"No":0}],"RentLimit":{"Min":0,"Max":15000},"AreaLimit":{"Min":0,"Max":200},"ApplySearchFilter":true,"Page":1,"Take":10,"SortOrder":"SeekAreaDescription ASC, StreetName ASC","ReturnParameters":["ObjectNo","FirstEstateImageUrl","Street","SeekAreaDescription","PlaceName","ObjectSubDescription","ObjectArea","RentPerMonth","MarketPlaceDescription","CountInterest","FirstInfoTextShort","FirstInfoText","EndPeriodMP","FreeFrom","SeekAreaUrl","Latitude","Longitude","BoardNo"]},
+            Parm1: {
+                "CompanyNo": 0,
+                "SyndicateNo": 1,
+                "ObjectMainGroupNo": 1,
+                "MarketPlaces": [{"No": 101}, {"No": 100}],
+                "Advertisements": [{"No": 0}],
+                "RentLimit": {"Min": 0, "Max": 15000},
+                "AreaLimit": {"Min": 0, "Max": 200},
+                "ApplySearchFilter": true,
+                "Page": 1,
+                "Take": 10,
+                "SortOrder": "SeekAreaDescription ASC, StreetName ASC",
+                "ReturnParameters": ["ObjectNo", "FirstEstateImageUrl", "Street", "SeekAreaDescription", "PlaceName", "ObjectSubDescription", "ObjectArea", "RentPerMonth", "MarketPlaceDescription", "CountInterest", "FirstInfoTextShort", "FirstInfoText", "EndPeriodMP", "FreeFrom", "SeekAreaUrl", "Latitude", "Longitude", "BoardNo"]
+            },
             CallbackMethod: "PostObjectSearch",
             CallbackParmCount: 1,
             __WWEVENTCALLBACK: ''
@@ -2394,8 +2396,8 @@ let check = {
                 headers: {
                     /*'Accept-Language': '*'*/
                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-'Accept-Encoding': 'gzip, deflate, br',
-'Accept-Language': 'en,sv;q=0.9,it;q=0.8'
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Accept-Language': 'en,sv;q=0.9,it;q=0.8'
                 },
                 followRedirect: false,
                 jar: cookies
@@ -2444,7 +2446,7 @@ let check = {
                     }
 
 
-                    let apartmentinDb = check.dbAva***REMOVED***ble.some(function (dbApartment) {
+                    let apartmentinDb = check.dbAvailable.some(function (dbApartment) {
                         if (dbApartment.id == id && dbApartment.price > 0) {
                             dbApartment.refid = refid;
                             localApartments.push(dbApartment);
@@ -2544,8 +2546,8 @@ let check = {
                         emailSentNewLocations.push(city);
 
                         sendEmail({
-                            from: '"BF Watcher" <***REMOVED***acc1@gmail.com>', // sender address
-                            to: '***REMOVED******REMOVED******REMOVED***',
+                            from: '"BF Watcher" <exampleEmail@gmail.com>', // sender address
+                            to: 'exampleEmail@gmail.com',
                             subject: 'BF Watcher HEMBLA ✔', // Subject line
                             text: 'NEW HEMBLA LOCATION: ' + city, // html body
                         }, function (success, emailsArr) {
@@ -2993,8 +2995,8 @@ let check = {
                         emailSentNewLocations.push(city);
 
                         sendEmail({
-                            from: '"BF Watcher" <***REMOVED***acc1@gmail.com>', // sender address
-                            to: '***REMOVED******REMOVED******REMOVED***',
+                            from: '"BF Watcher" <exampleEmail@gmail.com>', // sender address
+                            to: 'exampleEmail@gmail.com',
                             subject: 'BF Watcher AKELIUS ✔', // Subject line
                             text: 'NEW AKELIUS LOCATION: ' + city, // html body
                         }, function (success, emailsArr) {
@@ -3027,7 +3029,7 @@ let check = {
                     //var rooms = parseInt(ad['details']["numberOfRooms"], 10) || 0;
                     var rooms = parseInt(ad['keyfacts']["number-of-rooms"], 10) || 0;
 
-                    var apartmentinDb = check.dbAva***REMOVED***ble.some(function (dbApartment) {
+                    var apartmentinDb = check.dbAvailable.some(function (dbApartment) {
                         if (dbApartment.id == id && dbApartment.price > 0) {
                             dbApartment.address = ad['keyfacts']['streetname'].trim();
                             localApartments.push(dbApartment);
@@ -3144,7 +3146,7 @@ let check = {
 
                     var url = ads.eq(i).find('div.link-wrapper a').eq(0).attr('href');
 
-                    var adInDb = check.dbAva***REMOVED***ble.some(function (apartment) {
+                    var adInDb = check.dbAvailable.some(function (apartment) {
                         if (apartment.url == url) {
                             localApartments.push(apartment);
                             return true;
@@ -3388,11 +3390,6 @@ let check = {
         check.lastCheckedObj[funcName]['lastChecked'] = dateTimeCache;
         check.lastCheckedObj[funcName]['status'] = 'checking';
 
-        // Kontraktet gick till en annan sökande
-        // Du har inte blivit erbjuden visning
-        // 40% av inkomsten
-
-
         delete check.errorsObj[funcName];
 
         try {
@@ -3483,7 +3480,7 @@ let check = {
                                 var url = 'https://minasidor.sollentunahem.se/ledigt/' + apartment.find('a[id$=ObjectDetailsUrl]').eq(0).attr('href');
                                 var interestAmount = parseInt(apartment.find('[id$=ObjectInterestCount]').eq(0).text()) || 0;
 
-                                var apartmentinDb = check.dbAva***REMOVED***ble.some(function (dbApartment) {
+                                var apartmentinDb = check.dbAvailable.some(function (dbApartment) {
                                     if (dbApartment.url == url && dbApartment.price > 0) {
                                         dbApartment.interestAmount = interestAmount;
                                         localApartments.push(dbApartment);
@@ -3564,7 +3561,7 @@ let check = {
                     let index = 0;
 
                     if (noOfPages < 6 || pageNr < 4) {
-                        index = pageNr-1
+                        index = pageNr - 1
                     } else if (noOfPages - pageNr === 0) {
                         index = 4;
                     } else {
@@ -3661,7 +3658,7 @@ let check = {
 
         try {
             request({
-                //uri: 'https://hyresborsen.telge.se/Res/Themes/Telgebostader/Pages/HSS/Object/ObjectListB.aspx?objectgroup=1&action=Ava***REMOVED***ble',
+                //uri: 'https://hyresborsen.telge.se/Res/Themes/Telgebostader/Pages/HSS/Object/ObjectListB.aspx?objectgroup=1&action=Available',
                 uri: 'https://hyresborsen.telge.se/res/themes/telgebostader/pages/public/objectlistpublicb.aspx?objectgroup=1',
                 method: "GET",
                 headers: {
@@ -3749,7 +3746,7 @@ let check = {
 
                                 var url = 'https://hyresborsen.telge.se/res/themes/telgebostader/pages/public/' + apartment.find('a[id*="_hlDetails"]').eq(0).attr('href').replace(/(\.\.\/)|(cmguid=.+?&)/gi, '');
 
-                                var apartmentinDb = check.dbAva***REMOVED***ble.some(function (dbApartment) {
+                                var apartmentinDb = check.dbAvailable.some(function (dbApartment) {
                                     if (dbApartment.url == url && dbApartment.price > 0) {
                                         dbApartment.info.idUrl = 'https://hyresborsen.telge.se/HSS/Object/ObjectDetailsTemplateB.aspx?id=' + dbApartment.id;
                                         localApartments.push(dbApartment);
@@ -3853,7 +3850,7 @@ let check = {
                     let index = 0;
 
                     if (noOfPages < 6 || pageNr < 4) {
-                        index = pageNr-1
+                        index = pageNr - 1
                     } else if (noOfPages - pageNr === 0) {
                         index = 4;
                     } else {
@@ -3861,11 +3858,11 @@ let check = {
                     }
 
                     request({
-                        uri: 'https://hyresborsen.telge.se/res/themes/telgebostader/pages/public/objectlistpublicb.aspx?objectgroup=1&action=Ava***REMOVED***ble',
+                        uri: 'https://hyresborsen.telge.se/res/themes/telgebostader/pages/public/objectlistpublicb.aspx?objectgroup=1&action=Available',
                         method: "POST",
                         headers: {
                             'Origin': 'https://hyresborsen.telge.se',
-                            'Referer': 'https://hyresborsen.telge.se/res/themes/telgebostader/pages/public/objectlistpublicb.aspx?objectgroup=1&action=Ava***REMOVED***ble',
+                            'Referer': 'https://hyresborsen.telge.se/res/themes/telgebostader/pages/public/objectlistpublicb.aspx?objectgroup=1&action=Available',
                         },
                         jar: cookies,
                         form: {
@@ -3993,7 +3990,7 @@ let auto = {
         var urlsObj = {
             loginPage: 'https://bostad.hasselbyhem.se/User/MyPagesLogin.aspx',
             interestList: 'https://bostad.hasselbyhem.se/HSS/ObjectInterest/ListInterest.aspx',
-            ava***REMOVED***bleList: 'https://bostad.hasselbyhem.se/HSS/Object/object_list.aspx?objectgroup=1&action=Ava***REMOVED***ble',
+            availableList: 'https://bostad.hasselbyhem.se/HSS/Object/object_list.aspx?objectgroup=1&action=Available',
             addApartmentButtonText: 'Anmäl intresse',
             loginButtonText: 'OK',
             interestListRemoveText: 'Du har inte blivit erbjuden visning',
@@ -4014,7 +4011,7 @@ let auto = {
         try {
 
 
-            apartmentsArr = typeof apartmentsArr !== "object" ? check.ava***REMOVED***ble : apartmentsArr;
+            apartmentsArr = typeof apartmentsArr !== "object" ? check.available : apartmentsArr;
 
 
             apartmentsArr = apartmentsArr.filter(apartment => apartment.site == funcName);
@@ -4033,7 +4030,7 @@ let auto = {
                         cookiesArr[userIndex] = request.jar();
                         usersFilteredApartmentsArr[userIndex] = [];
 
-                        var ava***REMOVED***bleApartmentsInInterestlist = 0;
+                        var availableApartmentsInInterestlist = 0;
 
                         apartmentsArr.forEach(function (apartment) {
                             if ((typeof user.auto[funcName].maxRooms === "undefined" || apartment.rooms < user.auto[funcName].maxRooms + 1)
@@ -4046,11 +4043,11 @@ let auto = {
                                 usersFilteredApartmentsArr[userIndex].push(apartment);
                             }
                             if (apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) {
-                                ava***REMOVED***bleApartmentsInInterestlist++;
+                                availableApartmentsInInterestlist++;
                             }
                         });
 
-                        if (!(usersFilteredApartmentsArr[userIndex].length) || ava***REMOVED***bleApartmentsInInterestlist > maxInterestList - 1) {
+                        if (!(usersFilteredApartmentsArr[userIndex].length) || availableApartmentsInInterestlist > maxInterestList - 1) {
                             return cb();
                         }
 
@@ -4165,7 +4162,7 @@ let auto = {
                                     uri: apartment.url,
                                     method: "GET",
                                     headers: {
-                                        'Referer': urlsObj.ava***REMOVED***bleList,
+                                        'Referer': urlsObj.availableList,
                                         'Origin': urlsObj.origin,
                                     },
                                     followRedirect: false,
@@ -4254,7 +4251,7 @@ let auto = {
 
                                                 apartment.info.interestList.push(user.name.toLowerCase());
 
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
                                                 cb();
                                             }
@@ -4425,7 +4422,7 @@ let auto = {
                                     });
 
 
-                                    check.dbAva***REMOVED***ble
+                                    check.dbAvailable
                                         .filter(dbApartment => dbApartment.site == funcName)
                                         .forEach(function (apartment) {
 
@@ -4435,7 +4432,7 @@ let auto = {
                                                 apartment.info.interestList.push(user.name.toLowerCase());
 
 
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
 
                                             } else if (!(listInterestIDs.contains(apartment.id)) && apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) {
@@ -4446,7 +4443,7 @@ let auto = {
                                                     delete apartment.info.interestList;
                                                 }
 
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                             }
                                         });
 
@@ -4494,7 +4491,7 @@ let auto = {
                          cookiesArr[userIndex] = request.jar();
                          usersFilteredApartmentsArr[userIndex] = [];
 
-                         var ava***REMOVED***bleApartmentsInInterestlist = 0;
+                         var availableApartmentsInInterestlist = 0;
 
                          apartmentsArr.forEach(function (apartment) {
                              if ((typeof user.auto[funcName].maxRooms === "undefined" || apartment.rooms < user.auto[funcName].maxRooms + 1)
@@ -4507,11 +4504,11 @@ let auto = {
                                  usersFilteredApartmentsArr[userIndex].push(apartment);
                              }
                              if (apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) {
-                                 ava***REMOVED***bleApartmentsInInterestlist++;
+                                 availableApartmentsInInterestlist++;
                              }
                          });
 
-                         if (!(usersFilteredApartmentsArr[userIndex].length) || ava***REMOVED***bleApartmentsInInterestlist > maxInterestList - 1) {
+                         if (!(usersFilteredApartmentsArr[userIndex].length) || availableApartmentsInInterestlist > maxInterestList - 1) {
                              if (++doneCount == config.users.length) {
                                  return auto.done(mainCB, funcName);
                              }
@@ -4629,7 +4626,7 @@ let auto = {
                                      uri: apartment.url,
                                      method: "GET",
                                      headers: {
-                                         'Referer': urlsObj.ava***REMOVED***bleList,
+                                         'Referer': urlsObj.availableList,
                                          'Origin': urlsObj.origin,
                                      },
                                      followRedirect: false,
@@ -4718,7 +4715,7 @@ let auto = {
 
                                                  apartment.info.interestList.push(user.name.toLowerCase());
 
-                                                 DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                 DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
                                                  cb();
                                              }
@@ -4893,7 +4890,7 @@ let auto = {
                                      });
 
 
-                                     check.dbAva***REMOVED***ble
+                                     check.dbAvailable
                                          .filter(dbApartment => dbApartment.site == funcName)
                                          .forEach(function (apartment) {
 
@@ -4903,7 +4900,7 @@ let auto = {
                                                  apartment.info.interestList.push(user.name.toLowerCase());
 
 
-                                                 DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                 DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
 
                                              } else if (!(listInterestIDs.contains(apartment.id)) && apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) {
@@ -4914,7 +4911,7 @@ let auto = {
                                                      delete apartment.info.interestList;
                                                  }
 
-                                                 DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                 DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                              }
                                          });
 
@@ -4968,7 +4965,7 @@ let auto = {
         delete auto.errorsObj[funcName];
 
         try {
-            apartmentsArr = typeof apartmentsArr !== "object" ? check.ava***REMOVED***ble : apartmentsArr;
+            apartmentsArr = typeof apartmentsArr !== "object" ? check.available : apartmentsArr;
 
 
             apartmentsArr = apartmentsArr.filter(apartment => apartment.site == funcName);
@@ -4989,7 +4986,7 @@ let auto = {
                         usersFilteredApartmentsArr[userIndex] = [];
 
 
-                        var ava***REMOVED***bleApartmentsInInterestlist = 0;
+                        var availableApartmentsInInterestlist = 0;
 
                         apartmentsArr.forEach(function (apartment) {
                             if ((typeof user.auto[funcName].maxRooms === "undefined" || apartment.rooms < user.auto[funcName].maxRooms + 1)
@@ -5001,11 +4998,11 @@ let auto = {
                                 usersFilteredApartmentsArr[userIndex].push(apartment);
                             }
                             if (apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) {
-                                ava***REMOVED***bleApartmentsInInterestlist++;
+                                availableApartmentsInInterestlist++;
                             }
                         });
 
-                        if (!(usersFilteredApartmentsArr[userIndex].length) || ava***REMOVED***bleApartmentsInInterestlist > maxInterestList - 1) {
+                        if (!(usersFilteredApartmentsArr[userIndex].length) || availableApartmentsInInterestlist > maxInterestList - 1) {
 
                             return cb();
                         }
@@ -5202,7 +5199,7 @@ let auto = {
 
                                                 apartment.info.interestList.push(user.name.toLowerCase());
 
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
                                                 cb();
                                             }
@@ -5373,7 +5370,7 @@ let auto = {
                                     });
 
 
-                                    check.dbAva***REMOVED***ble
+                                    check.dbAvailable
                                         .filter(dbApartment => dbApartment.site == funcName)
                                         .forEach(function (apartment) {
 
@@ -5383,7 +5380,7 @@ let auto = {
                                                 apartment.info.interestList.push(user.name.toLowerCase());
 
 
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
 
                                             } else if (!(listInterestIDs.contains(apartment.id)) && apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) {
@@ -5395,7 +5392,7 @@ let auto = {
                                                 }
 
 
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                             }
                                         });
 
@@ -5441,7 +5438,7 @@ let auto = {
                         usersFilteredApartmentsArr[userIndex] = [];
 
 
-                        var ava***REMOVED***bleApartmentsInInterestlist = 0;
+                        var availableApartmentsInInterestlist = 0;
 
                         apartmentsArr.forEach(function (apartment) {
                             if ((typeof user.auto[funcName].maxRooms === "undefined" || apartment.rooms < user.auto[funcName].maxRooms + 1)
@@ -5453,11 +5450,11 @@ let auto = {
                                 usersFilteredApartmentsArr[userIndex].push(apartment);
                             }
                             if (apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) {
-                                ava***REMOVED***bleApartmentsInInterestlist++;
+                                availableApartmentsInInterestlist++;
                             }
                         });
 
-                        if (!(usersFilteredApartmentsArr[userIndex].length) || ava***REMOVED***bleApartmentsInInterestlist > maxInterestList - 1) {
+                        if (!(usersFilteredApartmentsArr[userIndex].length) || availableApartmentsInInterestlist > maxInterestList - 1) {
                             if (++doneCount == config.users.length) {
                                 return auto.done(mainCB, funcName);
                             }
@@ -5656,7 +5653,7 @@ let auto = {
 
                                                 apartment.info.interestList.push(user.name.toLowerCase());
 
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
                                                 cb();
                                             }
@@ -5831,7 +5828,7 @@ let auto = {
                                     });
 
 
-                                    check.dbAva***REMOVED***ble
+                                    check.dbAvailable
                                         .filter(dbApartment => dbApartment.site == funcName)
                                         .forEach(function (apartment) {
 
@@ -5841,7 +5838,7 @@ let auto = {
                                                 apartment.info.interestList.push(user.name.toLowerCase());
 
 
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
 
                                             } else if (!(listInterestIDs.contains(apartment.id)) && apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) {
@@ -5853,7 +5850,7 @@ let auto = {
                                                 }
 
 
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                             }
                                         });
 
@@ -5906,7 +5903,7 @@ let auto = {
         delete auto.errorsObj[funcName];
 
         try {
-            apartmentsArr = typeof apartmentsArr !== "object" ? check.ava***REMOVED***ble : apartmentsArr;
+            apartmentsArr = typeof apartmentsArr !== "object" ? check.available : apartmentsArr;
 
 
             apartmentsArr = apartmentsArr.filter(apartment => apartment.site == funcName);
@@ -5925,18 +5922,18 @@ let auto = {
                         cookiesArr[userIndex] = request.jar();
                         usersFilteredApartmentsArr[userIndex] = [];
 
-                        var ava***REMOVED***bleApartmentsInInterestlist = 0;
+                        var availableApartmentsInInterestlist = 0;
 
                         apartmentsArr.forEach(function (apartment) {
                             if ((typeof user.auto[funcName].maxRooms === "undefined" || apartment.rooms < user.auto[funcName].maxRooms + 1) && apartment.rooms > user.auto[funcName].minRooms - 1 && apartment.price - 1 < user.auto[funcName].maxPrice && !(apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) && (typeof config.roomsMaxPrices[apartment.rooms] === "undefined" || (apartment.price < config.roomsMaxPrices[apartment.rooms] + 1))) {
                                 usersFilteredApartmentsArr[userIndex].push(apartment);
                             }
                             if (apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) {
-                                ava***REMOVED***bleApartmentsInInterestlist++;
+                                availableApartmentsInInterestlist++;
                             }
                         });
 
-                        if (!(usersFilteredApartmentsArr[userIndex].length) || ava***REMOVED***bleApartmentsInInterestlist > maxInterestList - 1) {
+                        if (!(usersFilteredApartmentsArr[userIndex].length) || availableApartmentsInInterestlist > maxInterestList - 1) {
                             return cb();
                         }
 
@@ -6119,7 +6116,7 @@ let auto = {
                                                 apartment.info.interestList = apartment.info.interestList || [];
                                                 console.log(getDateTime() + '  [' + user.name + '] Added AUTO' + funcName.toUpperCase() + ' ' + apartment.id + '!');
                                                 apartment.info.interestList.push(user.name.toLowerCase());
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                                 cb();
                                             }
 
@@ -6290,7 +6287,7 @@ let auto = {
                                     });
 
 
-                                    check.dbAva***REMOVED***ble
+                                    check.dbAvailable
                                         .filter(dbApartment => dbApartment.site == funcName)
                                         .forEach(function (apartment) {
 
@@ -6300,7 +6297,7 @@ let auto = {
                                                 apartment.info.interestList = apartment.info.interestList || [];
                                                 apartment.info.interestList.push(user.name.toLowerCase());
 
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
 
                                             } else if (!(listInterestIDs.contains(apartment.id)) && apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) {
@@ -6311,7 +6308,7 @@ let auto = {
                                                     delete apartment.info.interestList;
                                                 }
 
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                             }
                                         });
 
@@ -6356,18 +6353,18 @@ let auto = {
                         cookiesArr[userIndex] = request.jar();
                         usersFilteredApartmentsArr[userIndex] = [];
 
-                        var ava***REMOVED***bleApartmentsInInterestlist = 0;
+                        var availableApartmentsInInterestlist = 0;
 
                         apartmentsArr.forEach(function (apartment) {
                             if ((typeof user.auto[funcName].maxRooms === "undefined" || apartment.rooms < user.auto[funcName].maxRooms + 1) && apartment.rooms > user.auto[funcName].minRooms - 1 && apartment.price - 1 < user.auto[funcName].maxPrice && !(apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) && (typeof config.roomsMaxPrices[apartment.rooms] === "undefined" || (apartment.price < config.roomsMaxPrices[apartment.rooms] + 1))) {
                                 usersFilteredApartmentsArr[userIndex].push(apartment);
                             }
                             if (apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) {
-                                ava***REMOVED***bleApartmentsInInterestlist++;
+                                availableApartmentsInInterestlist++;
                             }
                         });
 
-                        if (!(usersFilteredApartmentsArr[userIndex].length) || ava***REMOVED***bleApartmentsInInterestlist > maxInterestList - 1) {
+                        if (!(usersFilteredApartmentsArr[userIndex].length) || availableApartmentsInInterestlist > maxInterestList - 1) {
                             if (++doneCount == config.users.length) {
                                 return auto.done(mainCB, funcName);
                             }
@@ -6552,7 +6549,7 @@ let auto = {
                                                 apartment.info.interestList = apartment.info.interestList || [];
                                                 console.log(getDateTime() + '  [' + user.name + '] Added AUTO' + funcName.toUpperCase() + ' ' + apartment.id + '!');
                                                 apartment.info.interestList.push(user.name.toLowerCase());
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                                 cb();
                                             }
 
@@ -6727,7 +6724,7 @@ let auto = {
                                     });
 
 
-                                    check.dbAva***REMOVED***ble
+                                    check.dbAvailable
                                         .filter(dbApartment => dbApartment.site == funcName)
                                         .forEach(function (apartment) {
 
@@ -6737,7 +6734,7 @@ let auto = {
                                                 apartment.info.interestList = apartment.info.interestList || [];
                                                 apartment.info.interestList.push(user.name.toLowerCase());
 
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
 
                                             } else if (!(listInterestIDs.contains(apartment.id)) && apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) {
@@ -6748,7 +6745,7 @@ let auto = {
                                                     delete apartment.info.interestList;
                                                 }
 
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                             }
                                         });
 
@@ -6802,7 +6799,7 @@ let auto = {
 
         try {
 
-            apartmentsArr = typeof apartmentsArr !== "object" ? check.ava***REMOVED***ble : apartmentsArr;
+            apartmentsArr = typeof apartmentsArr !== "object" ? check.available : apartmentsArr;
 
 
             apartmentsArr = apartmentsArr.filter(apartment => apartment.site == [funcName]);
@@ -6819,18 +6816,18 @@ let auto = {
                         cookiesArr[userIndex] = request.jar();
                         usersFilteredApartmentsArr[userIndex] = [];
 
-                        var ava***REMOVED***bleApartmentsInInterestlist = 0;
+                        var availableApartmentsInInterestlist = 0;
 
                         apartmentsArr.forEach(function (apartment) {
                             if ((typeof user.auto[funcName].maxRooms === "undefined" || apartment.rooms < user.auto[funcName].maxRooms + 1) && apartment.rooms > user.auto[funcName].minRooms - 1 && apartment.price - 1 < user.auto[funcName].maxPrice && !(apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) && !(apartment.info['unpublished']) && (typeof config.roomsMaxPrices[apartment.rooms] === "undefined" || (apartment.price < config.roomsMaxPrices[apartment.rooms] + 1))) {
                                 usersFilteredApartmentsArr[userIndex].push(apartment);
                             }
                             if (apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase()) && !(apartment.info['unpublished'])) {
-                                ava***REMOVED***bleApartmentsInInterestlist++;
+                                availableApartmentsInInterestlist++;
                             }
                         });
 
-                        if (!(usersFilteredApartmentsArr[userIndex].length) || ava***REMOVED***bleApartmentsInInterestlist > maxInterestList - 1) {
+                        if (!(usersFilteredApartmentsArr[userIndex].length) || availableApartmentsInInterestlist > maxInterestList - 1) {
 
                             return cb();
                         }
@@ -7020,12 +7017,12 @@ let auto = {
                                                 if (errorText.contains('Hyresobjektet har avpublicerats')) {
 
                                                     apartment.info.unpublished = true;
-                                                    DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                    DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                                 } else if (errorText.contains('Du har redan en intresseanmälan registrerad på det önskade hyresobjektet')) {
                                                     apartment.info.interestList = apartment.info.interestList || [];
                                                     apartment.info.interestList.push(user.name.toLowerCase());
 
-                                                    DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                    DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                                 } else if (errorText.contains('du har uppnått det maximala antalet')) {
                                                     console.log((getDateTime() + '  [' + user.name + '] AUTO' + funcName.toUpperCase() + ': ' + errorText + '!').red);
                                                     usersFilteredApartmentsArr[userIndex] = [];
@@ -7042,7 +7039,7 @@ let auto = {
                                                 console.log(getDateTime() + '  [' + user.name + '] Added AUTO' + funcName.toUpperCase() + ' ' + apartment.id + '!');
                                                 apartment.info.interestList = apartment.info.interestList || [];
                                                 apartment.info.interestList.push(user.name.toLowerCase());
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
                                                 cb();
                                             }
@@ -7215,7 +7212,7 @@ let auto = {
                                     });
 
 
-                                    check.dbAva***REMOVED***ble
+                                    check.dbAvailable
                                         .filter(dbApartment => dbApartment.site == funcName)
                                         .forEach(function (apartment) {
 
@@ -7232,7 +7229,7 @@ let auto = {
                                                 apartment.info.interestList.push(user.name.toLowerCase());
 
 
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
 
                                             } else if (!(inDB) && apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) {
@@ -7243,7 +7240,7 @@ let auto = {
                                                     delete apartment.info.interestList;
                                                 }
 
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                             }
                                         });
 
@@ -7293,18 +7290,18 @@ let auto = {
                          cookiesArr[userIndex] = request.jar();
                          usersFilteredApartmentsArr[userIndex] = [];
 
-                         var ava***REMOVED***bleApartmentsInInterestlist = 0;
+                         var availableApartmentsInInterestlist = 0;
 
                          apartmentsArr.forEach(function (apartment) {
                              if ((typeof user.auto[funcName].maxRooms === "undefined" || apartment.rooms < user.auto[funcName].maxRooms + 1) && apartment.rooms > user.auto[funcName].minRooms - 1 && apartment.price - 1 < user.auto[funcName].maxPrice && !(apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) && !(apartment.info['unpublished']) && (typeof config.roomsMaxPrices[apartment.rooms] === "undefined" || (apartment.price < config.roomsMaxPrices[apartment.rooms] + 1))) {
                                  usersFilteredApartmentsArr[userIndex].push(apartment);
                              }
                              if (apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase()) && !(apartment.info['unpublished'])) {
-                                 ava***REMOVED***bleApartmentsInInterestlist++;
+                                 availableApartmentsInInterestlist++;
                              }
                          });
 
-                         if (!(usersFilteredApartmentsArr[userIndex].length) || ava***REMOVED***bleApartmentsInInterestlist > maxInterestList - 1) {
+                         if (!(usersFilteredApartmentsArr[userIndex].length) || availableApartmentsInInterestlist > maxInterestList - 1) {
                              if (++doneCount == config.users.length) {
                                  return auto.done(mainCB, funcName);
                              }
@@ -7442,12 +7439,12 @@ let auto = {
                                                  if (errorText.contains('Hyresobjektet har avpublicerats')) {
 
                                                      apartment.info.unpublished = true;
-                                                     DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                     DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                                  } else if (errorText.contains('Du har redan en intresseanmälan registrerad på det önskade hyresobjektet')) {
                                                      apartment.info.interestList = apartment.info.interestList || [];
                                                      apartment.info.interestList.push(user.name.toLowerCase());
 
-                                                     DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                     DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                                  } else if (errorText.contains('du har uppnått det maximala antalet')) {
                                                      console.log((getDateTime() + '  [' + user.name + '] AUTO' + funcName.toUpperCase() + ': ' + errorText + '!').red);
                                                      usersFilteredApartmentsArr[userIndex] = [];
@@ -7464,7 +7461,7 @@ let auto = {
                                                  console.log(getDateTime() + '  [' + user.name + '] Added AUTO' + funcName.toUpperCase() + ' ' + apartment.id + '!');
                                                  apartment.info.interestList = apartment.info.interestList || [];
                                                  apartment.info.interestList.push(user.name.toLowerCase());
-                                                 DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                 DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
                                                  cb();
                                              }
@@ -7641,7 +7638,7 @@ let auto = {
                                      });
 
 
-                                     check.dbAva***REMOVED***ble
+                                     check.dbAvailable
                                          .filter(dbApartment => dbApartment.site == funcName)
                                          .forEach(function (apartment) {
 
@@ -7658,7 +7655,7 @@ let auto = {
                                                  apartment.info.interestList.push(user.name.toLowerCase());
 
 
-                                                 DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                 DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
 
                                              } else if (!(inDB) && apartment.info.hasOwnProperty('interestList') && apartment.info.interestList.contains(user.name.toLowerCase())) {
@@ -7669,7 +7666,7 @@ let auto = {
                                                      delete apartment.info.interestList;
                                                  }
 
-                                                 DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                 DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                              }
                                          });
 
@@ -7723,7 +7720,7 @@ let auto = {
 
         try {
 
-            apartmentsArr = typeof apartmentsArr !== "object" ? check.ava***REMOVED***ble : apartmentsArr;
+            apartmentsArr = typeof apartmentsArr !== "object" ? check.available : apartmentsArr;
 
 
             apartmentsArr = apartmentsArr.filter(apartment => apartment.site == [funcName]);
@@ -7932,7 +7929,7 @@ let auto = {
                                                     console.log(getDateTime() + '  [' + user.name + '] Added AUTO' + funcName.toUpperCase() + ' ' + apartment.id + '!');
                                                     apartment.info.interestList = apartment.info.interestList || [];
                                                     apartment.info.interestList.push(user.name.toLowerCase());
-                                                    DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                    DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
                                                     cb();
                                                 }
@@ -7942,7 +7939,7 @@ let auto = {
                                             if (responseObj.html['objektintresse'].trim().contains('Du har gjort en intresseanmälan') || $('[data-action="intresse.radera"]').eq(0).text().trim().contains('Ångra intresseanmälan')) {
                                                 apartment.info.interestList = apartment.info.interestList || [];
                                                 apartment.info.interestList.push(user.name.toLowerCase());
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                             }
                                             cb();
                                         }
@@ -8221,7 +8218,7 @@ let auto = {
                                                     console.log(getDateTime() + '  [' + user.name + '] Added AUTO' + funcName.toUpperCase() + ' ' + apartment.id + '!');
                                                     apartment.info.interestList = apartment.info.interestList || [];
                                                     apartment.info.interestList.push(user.name.toLowerCase());
-                                                    DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                    DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
 
                                                     cb();
                                                 }
@@ -8231,7 +8228,7 @@ let auto = {
                                             if (responseObj.html['objektintresse'].trim().contains('Du har gjort en intresseanmälan') || $('[data-action="intresse.radera"]').eq(0).text().trim().contains('Ångra intresseanmälan')) {
                                                 apartment.info.interestList = apartment.info.interestList || [];
                                                 apartment.info.interestList.push(user.name.toLowerCase());
-                                                DB("UPDATE ava***REMOVED***ble SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
+                                                DB("UPDATE available SET info = '" + JSON.stringify(apartment.info) + "' WHERE id = '" + apartment.id + "'");
                                             }
                                             cb();
                                         }
@@ -8329,7 +8326,7 @@ let checkAllProcess = function () {
     let log = oneDayHasPassed();
 
     check.all(function (apartmentsArr, cb, toIncludeArr, toExcludeArr, log, currentlyRunning) {
-        check.process(undefined, function (ava***REMOVED***ble, currentlyRunning) {
+        check.process(undefined, function (available, currentlyRunning) {
             if (config.auto && !currentlyRunning && !(config.sitesToExclude.contains('*'))) {
                 auto.all();
             }
@@ -8434,7 +8431,7 @@ if (config.enableServer) {
     app.disable('x-powered-by');
     app.set('trust proxy', true);
 
-    app.use(bodyParser.urlencoded({ extended: false }))
+    app.use(bodyParser.urlencoded({extended: false}))
     app.use(bodyParser.json())
 
     app.use(function (request, response, next) {
@@ -8452,11 +8449,11 @@ if (config.enableServer) {
         //console.log(getDateTime() + ' bf-watcher request from ip: ' + req.ip);
 
         var editedTemplate = htmlTemplate;
-        var dbAva***REMOVED***ble = check.dbAva***REMOVED***ble;
+        var dbAvailable = check.dbAvailable;
 
-        /* if (!(dbAva***REMOVED***ble.length)) {
+        /* if (!(dbAvailable.length)) {
 
-             initDB(function (status, dbAva***REMOVED***ble) {
+             initDB(function (status, dbAvailable) {
                  if (status) {
                  }
 
@@ -8464,28 +8461,28 @@ if (config.enableServer) {
          } */
 
 
-        dbAva***REMOVED***ble = dbAva***REMOVED***ble
+        dbAvailable = dbAvailable
             .filter(apartment => apartment.price < config.roomsMaxPrices[Object.keys(config.roomsMaxPrices).length - 1] && !(config.sitesToExclude.contains(apartment.site)))
             .sort((a, b) => a.price > b.price ? 1 : (a.price === b.price ? (b.rooms > a.rooms ? 1 : -1) : -1));
 
 
         var html = '<tbody>\n';
-        for (var i = 0; i < dbAva***REMOVED***ble.length; i++) {
+        for (var i = 0; i < dbAvailable.length; i++) {
             html += '<tr>\n';
-            html += '<td class="column1"><a draggable="false" ' + (dbAva***REMOVED***ble[i].type == "fast" || dbAva***REMOVED***ble[i].type == "sigtuna" ? 'style="color:red; "' : ' ') + 'href="' + (dbAva***REMOVED***ble[i].info.idUrl || dbAva***REMOVED***ble[i].url) + '" target="_blank">' + dbAva***REMOVED***ble[i].id + '</a></td>\n';
-            html += '<td class="column2">' + dbAva***REMOVED***ble[i].price + ':-</td>\n';
-            html += '<td class="column3">' + dbAva***REMOVED***ble[i].rooms + ' Rum</td>\n';
-            html += '<td class="column4"><a draggable="false" rel="noopener noreferrer" target="_blank" href="' + (config.homepagesObj[dbAva***REMOVED***ble[i].site] || 'https://www.google.com/search?q=' + dbAva***REMOVED***ble[i].site) + '"><img draggable="false" alt="' + dbAva***REMOVED***ble[i].site + '" src="img/png/small/' + dbAva***REMOVED***ble[i].site + '.png"></a></td>\n';
+            html += '<td class="column1"><a draggable="false" ' + (dbAvailable[i].type == "fast" || dbAvailable[i].type == "sigtuna" ? 'style="color:red; "' : ' ') + 'href="' + (dbAvailable[i].info.idUrl || dbAvailable[i].url) + '" target="_blank">' + dbAvailable[i].id + '</a></td>\n';
+            html += '<td class="column2">' + dbAvailable[i].price + ':-</td>\n';
+            html += '<td class="column3">' + dbAvailable[i].rooms + ' Rum</td>\n';
+            html += '<td class="column4"><a draggable="false" rel="noopener noreferrer" target="_blank" href="' + (config.homepagesObj[dbAvailable[i].site] || 'https://www.google.com/search?q=' + dbAvailable[i].site) + '"><img draggable="false" alt="' + dbAvailable[i].site + '" src="img/png/small/' + dbAvailable[i].site + '.png"></a></td>\n';
             html += '</tr>\n';
         }
 
-        if (!(dbAva***REMOVED***ble.length)) {
-            html += '<tr><td colspan="4"><h2 style="color: white; text-align: center;">No Ads Ava***REMOVED***ble!</h2></td></tr>';
+        if (!(dbAvailable.length)) {
+            html += '<tr><td colspan="4"><h2 style="color: white; text-align: center;">No Ads Available!</h2></td></tr>';
         }
 
         html += '</tbody>';
 
-        var imgHost = 'https://***REMOVED******REMOVED***.com/bf-watcher/';
+        var imgHost = 'https://example.com/bf-watcher/';
 
         editedTemplate = editedTemplate.replace('{TBODY}', html)
             .replace('{DATETIME}', getDateTime())
@@ -8513,7 +8510,7 @@ if (config.enableServer) {
 
 
         var html = '<tbody>\n';
-        var toExclude = ['init', 'all', 'done', 'error', 'process', 'errorsObj', 'dbAva***REMOVED***ble', 'excludedIDs', 'ava***REMOVED***ble', 'lastCheckedObj', 'currentlyRunning'];
+        var toExclude = ['init', 'all', 'done', 'error', 'process', 'errorsObj', 'dbAvailable', 'excludedIDs', 'available', 'lastCheckedObj', 'currentlyRunning'];
         for (var site in check) {
             if (check.hasOwnProperty(site) && !(toExclude.contains(site))) {
 
@@ -8575,7 +8572,7 @@ if (config.enableServer) {
 
         html += '</tbody>';
 
-        var imgHost = 'https://***REMOVED******REMOVED***.com/bf-watcher/';
+        var imgHost = 'https://example.com/bf-watcher/';
 
 
         let nextDate;
@@ -8639,7 +8636,7 @@ if (config.enableServer) {
                 url: 'https://handler.twilio.com/twiml/***REMOVED***',
                 to: '+46***REMOVED***',
                 from: '+***REMOVED***',
-                statusCallback: 'https://***REMOVED******REMOVED***.com/bf-watcher/events',
+                statusCallback: 'https://example.com/bf-watcher/events',
                 statusCallbackEvent: ['initiated', 'answered', 'ringing', 'completed'],
                 statusCallbackMethod: 'POST',
                 machineDetection: 'Enable'
@@ -8659,7 +8656,7 @@ if (config.enableServer) {
 
         twiml.say({
             language: 'sv-SE'
-        }, 'Hej ***REMOVED***! Välkommen till denna samtal, vad vill du göra nu?');
+        }, 'Hej NAME! Välkommen till denna samtal, vad vill du göra nu?');
 
         // Render the response as XML in reply to the webhook request
         response.type('text/xml');
@@ -8687,7 +8684,7 @@ if (config.enableServer) {
     let wss = new WebSocket.Server({server: httpsServer});
 
 
-    var toExclude = ['init', 'all', 'done', 'error', 'process', 'errorsObj', 'dbAva***REMOVED***ble', 'excludedIDs', 'ava***REMOVED***ble', 'lastCheckedObj', 'currentlyRunning'];
+    var toExclude = ['init', 'all', 'done', 'error', 'process', 'errorsObj', 'dbAvailable', 'excludedIDs', 'available', 'lastCheckedObj', 'currentlyRunning'];
     let objToSend = {
         lastCheckedObj: {},
         autoSites: (Object.keys(auto)).filter(site => {
@@ -8887,11 +8884,11 @@ function getDateTime(onlyTime, noSeconds, onlyDate) {
 function sendEmail(mailOptions, cb) {
     /**
      var mailOptions = {
-        from: '"WiFog Notification" <notification@***REMOVED***.com>', // sender address
-        to: '***REMOVED******REMOVED******REMOVED***', // list of receivers separated by comma
-        subject: 'Giftcards Ava***REMOVED***ble! ✔', // Subject line
-        text: 'Giftcards Ava***REMOVED***ble!' // plaintext body
-        //html: '<now>Giftcards Ava***REMOVED***ble!</now>' // html body
+        from: '"WiFog Notification" <notification@example.com>', // sender address
+        to: 'exampleEmail@gmail.com', // list of receivers separated by comma
+        subject: 'Giftcards Available! ✔', // Subject line
+        text: 'Giftcards Available!' // plaintext body
+        //html: '<now>Giftcards Available!</now>' // html body
     };
 
      **/
@@ -8902,7 +8899,7 @@ function sendEmail(mailOptions, cb) {
     };
 
 
-    nodemailer.createTransport('smtps://***REMOVED***acc1%40gmail.com:Ila***REMOVED******REMOVED***03@smtp.gmail.com').sendMail(mailOptions, function (error, info) {
+    nodemailer.createTransport('smtps://exampleEmail%40gmail.com:***REMOVED***03@smtp.gmail.com').sendMail(mailOptions, function (error, info) {
         if (error) {
             console.log('EMAIL ERROR: ' + error.toString().red);
             return cb(false);
@@ -8922,19 +8919,19 @@ function initDB(cb, log) {
                 console.log(getDateTime() + '  BOT is Running!'.cyan);
             }
 
-            connection.query('SELECT * from ava***REMOVED***ble', function (err, results) {
+            connection.query('SELECT * from available', function (err, results) {
                 if (!err) {
 
-                    var dbAva***REMOVED***ble = [];
+                    var dbAvailable = [];
                     //var excludedIDs = [];
                     results.forEach(apartment => {
-                        dbAva***REMOVED***ble.push(apartment);
+                        dbAvailable.push(apartment);
                     });
                     /*results[1].forEach(apartment => {
                         excludedIDs.push(apartment.id);
                     });*/
 
-                    cb(true, dbAva***REMOVED***ble);
+                    cb(true, dbAvailable);
                     connection.release();
 
                 } else {
@@ -8981,8 +8978,8 @@ function sendErrorEmail(err) {
 
         sentErrors.push(err);
         sendEmail({
-            from: '"BF Watcher" <***REMOVED***acc1@gmail.com>', // sender address
-            to: '***REMOVED******REMOVED******REMOVED***',
+            from: '"BF Watcher" <exampleEmail@gmail.com>', // sender address
+            to: 'exampleEmail@gmail.com',
             subject: 'BF Watcher Error!', // Subject line
             html: err, // html body
         }, function (success, emailsArr) {
@@ -9070,7 +9067,6 @@ function getDate(days = 0) {
     return year + '-' + month + '-' + day;
 }
 
-function capitalizeFirstLetter(string)
-{
+function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
 }

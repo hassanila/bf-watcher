@@ -15,7 +15,7 @@ CREATE DATABASE `bf-watcher`;
 USE `bf-watcher`;
 
 
-CREATE TABLE `ava***REMOVED***ble` (
+CREATE TABLE `available` (
   `id` varchar(64) DEFAULT NULL,
   `site` varchar(64) DEFAULT NULL,
   `price` int(64) DEFAULT NULL,
@@ -43,9 +43,9 @@ CREATE TABLE `removed` (
 
 
 --
--- Indexes for table `ava***REMOVED***ble`
+-- Indexes for table `available`
 --
-ALTER TABLE `ava***REMOVED***ble`
+ALTER TABLE `available`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `id` (`id`);
 
