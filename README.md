@@ -12,10 +12,12 @@
 * Automatically apply for apartments that match requirements set in `config.js`
 * Multi-user support
 
-```diff
-! OBSOLETE as it's no longer being used or maintained.
-! This repo was previously private and is now public, and for that reason, sensitive information in the commit history has been replaced with ***REMOVED***
-```
+<br><br>
+
+
+**OBSOLETE as it's no longer being used or maintained.**\
+**This repo was previously private and is now public, and for that reason, sensitive information in the commit history has been replaced with `***REMOVED***`**
+
 
 <br>
 
