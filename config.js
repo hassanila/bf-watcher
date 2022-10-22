@@ -1,60 +1,53 @@
-var proxies = [
+let proxies = [
     null,
-    'http://127.0.0.1:8888',
-    'http://***REMOVED******REMOVED***97:***REMOVED******REMOVED******REMOVED***@***REMOVED***:8889',
-    'http://***REMOVED******REMOVED***.com:3292'
+    'http://127.0.0.1:8888'
 ];
 
 
 module.exports = {
 
     mysql: {
-        host: '***REMOVED******REMOVED***.com',
-        port: 3306, //3306
-        user: '***REMOVED***',
-        password: '***REMOVED***',
+        host: 'https://example.com',
+        port: 3306,
+        user: 'admin',
+        password: 'somePassword',
         database: 'bf-watcher',
         dateStrings: true
     },
     users: [
         {
-            name: '***REMOVED***',
-            email: '***REMOVED******REMOVED******REMOVED***',
-            pNummer: '***REMOVED***',
+            name: 'User 1',
+            email: 'user1@example.com',
+            pNummer: '920101-1721', // personnummer
             auto: {
                 hhem: {
-                    // ***REMOVED***
-                    // max 25% av inkomsten
                     active: true,
-                    password: '***REMOVED******REMOVED******REMOVED***',
+                    password: 'somePassword',
                     maxPrice: 12000,
                     minRooms: 3,
                     maxRooms: 5
                 },
                 vicpark: {
                     active: true,
-                    password: '***REMOVED******REMOVED******REMOVED***',
+                    password: 'somePassword',
                     maxPrice: 12000,
                     minRooms: 3
                 },
                 akelius: {
-                    // fix medsökande
                     active: true,
-                    password: '***REMOVED******REMOVED******REMOVED***',
+                    password: 'somePassword',
                     maxPrice: 12000,
                     minRooms: 3
                 },
                 vasbyhem: {
                     active: true,
-                    password: '***REMOVED******REMOVED******REMOVED***',
-                    // 40%  av inkomsten max
+                    password: 'somePassword',
                     maxPrice: 10000,
                     minRooms: 3
                 },
                 sigtunahem: {
                     active: true,
-                    password: '***REMOVED******REMOVED******REMOVED***',
-                    // 40%  av inkomsten max
+                    password: 'somePassword',
                     maxPrice: 10000,
                     minRooms: 3
                 }
@@ -67,39 +60,37 @@ module.exports = {
             ]
         },
         {
-            name: '***REMOVED***',
-            email: '***REMOVED***',
-            pNummer: '***REMOVED***',
+            name: 'User 2',
+            email: 'user2@example.com',
+            pNummer: '940101-1291', // personnummer
             auto: {
                 hhem: {
                     active: true,
-                    password: '***REMOVED***',
+                    password: 'somePassword',
                     maxPrice: 12000,
                     minRooms: 3
                 },
                 vicpark: {
                     active: true,
-                    password: '***REMOVED***',
+                    password: 'somePassword',
                     maxPrice: 13000,
                     minRooms: 3
                 },
                 akelius: {
                     active: true,
-                    password: '***REMOVED***',
+                    password: 'somePassword',
                     maxPrice: 13000,
                     minRooms: 3
                 },
                 vasbyhem: {
                     active: true,
-                    password: '***REMOVED***',
-                    // 40%  av inkomsten max
+                    password: 'somePassword',
                     maxPrice: 10000,
                     minRooms: 3
                 },
                 sigtunahem: {
                     active: true,
-                    password: '***REMOVED***',
-                    // 40%  av inkomsten max
+                    password: 'somePassword',
                     maxPrice: 15000,
                     minRooms: 3
                 }
@@ -112,22 +103,6 @@ module.exports = {
                 'jfhus',
                 'hembla',
                 'wahlin:normal',
-            ]
-        },
-        {
-            name: '***REMOVED***',
-            email: '***REMOVED***',
-            pNummer: '***REMOVED***',
-            auto: {},
-            check: false,
-            notify: false,
-            types: ['normal', 'fast', 'sigtuna'],
-            sitesToExclude: [
-                'bf:normal',
-                'jfhus',
-                'hembla',
-                'wahlin:normal',
-                'akelius'
             ]
         }
     ],
@@ -209,15 +184,14 @@ module.exports = {
     debug: false,
     auto: true,
     checkOnInit: true,
-    email: '***REMOVED******REMOVED******REMOVED***',
-    password: '***REMOVED******REMOVED******REMOVED***',
+    email: 'admin@example.com',
+    password: 'somePassword',
     proxies: proxies,
-    android_ua: 'Android 8.0.0; O; sdk=26; ***REMOVED*** android-55/5.5',
+    android_ua: 'Android 8.0.0; O; sdk=26; android-55/5.5',
     chrome_ua: 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
     proxy: proxies[0],
     enableServer: true,
     embedEmailImages: false,
     logsPath: './../logs/',
     version: 4.0
-
 };
