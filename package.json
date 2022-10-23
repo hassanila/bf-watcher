@@ -27,8 +27,8 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "start"
+    "test": ""
   },
   "author": "hassanila97",
-  "license": "ISC"
+  "license": "UNLICENSED"
 }
