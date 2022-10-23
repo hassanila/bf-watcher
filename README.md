@@ -3,7 +3,7 @@
 ## ⚠️ This project is now obsolete
 
 #### (Bostadsförmedlingen Watcher)
-### This was a project written in JavaScript (NodeJS) in 2018 for monitoring new rent apartments in **Stockholm, Sweden**.
+### This is a JavaScript (NodeJS) project for monitoring new rent apartments in **Stockholm, Sweden**.
 
 * Check for new apartments every x minutes
 * Log apartments info and the date/time they were added/removed into a database
