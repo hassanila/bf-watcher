@@ -1,4 +1,4 @@
-### <div style="text-align: center;"><img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/logo.png" width="280" alt="logo"></div>
+### <p align="center"><img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/logo.png" width="280" alt="Logo"></p>
 
 ## ⚠️ This project is now obsolete
 
@@ -12,7 +12,11 @@
 * Automatically apply for apartments that match requirements set in `config.js`
 * Multi-user support
 
-<br><br>
+<br>
+
+<p align="center"><img src="src/img/png/demo.png" alt="Demo Image"> </p>
+
+<br>
 
 
 **OBSOLETE as it's no longer being used or maintained.**\
