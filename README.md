@@ -1,4 +1,4 @@
-### <p align="center"><img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/logo.png" width="280" alt="Logo"></p>
+### <p align="center"><img src="https://raw.githubusercontent.com/hassanila/bf-watcher/master/src/img/png/small/logo.png" width="280" alt="Logo"></p>
 
 ## ⚠️ This project is now obsolete
 
@@ -31,19 +31,19 @@
 
 ### Supported sites:
 
-<img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/bf.png" width="100" alt="Bostadsförmedlingen">&emsp;&emsp;
-<img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/hhem.png" width="100" alt="Hässelbyhem">&emsp;&emsp;
-<img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/jfhus.png" width="100" alt="Järfällahus">&emsp;&emsp;
-<img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/upbrohus.png" width="100" alt="UpplandsBro-Hus">&emsp;&emsp;
-<img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/sigtunahem.png" width="100" alt="SigtunaHem">&emsp;&emsp;
-<img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/akelius.png" width="100" alt="Akelius">&emsp;&emsp;
-<img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/heimstaden.png" width="100" alt="Heimstaden">&emsp;&emsp;
-<img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/vasbyhem.png" width="100" alt="Väsbyhem">&emsp;&emsp;
-<img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/vicpark.png" width="100" alt="Victoria Park">&emsp;&emsp;
-<img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/hembla.png" width="100" alt="Hembla">&emsp;&emsp;
-<img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/sollentunahem.png" width="100" alt="SollentunaHem">&emsp;&emsp;
-<img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/wahlin.png" width="100" alt="Wåhlin Fastigheter">&emsp;&emsp;
-<img src="https://raw.githubusercontent.com/hassanila97/bf-watcher/master/src/img/png/small/telge.png" width="100" alt="Telge">
+<img src="https://raw.githubusercontent.com/hassanila/bf-watcher/master/src/img/png/small/bf.png" width="100" alt="Bostadsförmedlingen">&emsp;&emsp;
+<img src="https://raw.githubusercontent.com/hassanila/bf-watcher/master/src/img/png/small/hhem.png" width="100" alt="Hässelbyhem">&emsp;&emsp;
+<img src="https://raw.githubusercontent.com/hassanila/bf-watcher/master/src/img/png/small/jfhus.png" width="100" alt="Järfällahus">&emsp;&emsp;
+<img src="https://raw.githubusercontent.com/hassanila/bf-watcher/master/src/img/png/small/upbrohus.png" width="100" alt="UpplandsBro-Hus">&emsp;&emsp;
+<img src="https://raw.githubusercontent.com/hassanila/bf-watcher/master/src/img/png/small/sigtunahem.png" width="100" alt="SigtunaHem">&emsp;&emsp;
+<img src="https://raw.githubusercontent.com/hassanila/bf-watcher/master/src/img/png/small/akelius.png" width="100" alt="Akelius">&emsp;&emsp;
+<img src="https://raw.githubusercontent.com/hassanila/bf-watcher/master/src/img/png/small/heimstaden.png" width="100" alt="Heimstaden">&emsp;&emsp;
+<img src="https://raw.githubusercontent.com/hassanila/bf-watcher/master/src/img/png/small/vasbyhem.png" width="100" alt="Väsbyhem">&emsp;&emsp;
+<img src="https://raw.githubusercontent.com/hassanila/bf-watcher/master/src/img/png/small/vicpark.png" width="100" alt="Victoria Park">&emsp;&emsp;
+<img src="https://raw.githubusercontent.com/hassanila/bf-watcher/master/src/img/png/small/hembla.png" width="100" alt="Hembla">&emsp;&emsp;
+<img src="https://raw.githubusercontent.com/hassanila/bf-watcher/master/src/img/png/small/sollentunahem.png" width="100" alt="SollentunaHem">&emsp;&emsp;
+<img src="https://raw.githubusercontent.com/hassanila/bf-watcher/master/src/img/png/small/wahlin.png" width="100" alt="Wåhlin Fastigheter">&emsp;&emsp;
+<img src="https://raw.githubusercontent.com/hassanila/bf-watcher/master/src/img/png/small/telge.png" width="100" alt="Telge">
 
 
 **_Disclaimer: All trademarks, logos, and brand names used in this repo are the property of their respective owners_**
